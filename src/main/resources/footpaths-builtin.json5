@@ -2,25 +2,26 @@
 // Note this isn't really json5 but the mod preprocess the file to strip lines that start with '//'
 
 {
-  'defaultStepCount': 5,
-  'defaultTimeoutTicks': 72000,
-  'ignoreBuiltinConfig': false,
   'blocks' : [
     {
       'id': 'minecraft:grass_block',
       'nextId': 'minecraft:dirt',
-      'stepCount': 2,
+      'stepCount': 0,
       'timeoutTicks': 99999999
     },
     {
       'id': 'minecraft:dirt',
       'nextId': 'minecraft:coarse_dirt',
-      'stepCount': 5
+      'stepCount': 5,
+      'timeoutTicks': 72000
     },
     {
-      'id': 'minecraft:coarse_dirt',
-      'nextId': 'minecraft:dirt_path',
-      'stepCount': 5
+      'id': 'minecraft:snow_block',
+      'nextId': 'minecraft:snow',
+      'stepCount': 1,
+      'timeoutTicks': 72000
     }
+
+
   ]
 }

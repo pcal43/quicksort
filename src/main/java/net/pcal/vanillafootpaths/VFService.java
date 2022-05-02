@@ -40,6 +40,7 @@ public class VFService {
 
     private static final class SingletonHolder {
         private static final VFService INSTANCE;
+
         static {
             INSTANCE = new VFService();
         }
@@ -55,12 +56,13 @@ public class VFService {
             this.stepCount = stepCount;
             this.lastStepTimestamp = lastStepTimestamp;
         }
+
         int stepCount;
         long lastStepTimestamp;
 
         @Override
         public String toString() {
-            return "stepCount: "+this.stepCount+" lastStepTimestamp: "+this.lastStepTimestamp;
+            return "stepCount: " + this.stepCount + " lastStepTimestamp: " + this.lastStepTimestamp;
         }
     }
 
@@ -78,7 +80,6 @@ public class VFService {
         this.checks = requireNonNull(config);
     }
 
-
     // ===================================================================================
     // Fields
 
@@ -94,31 +95,31 @@ public class VFService {
             final BlockState state = world.getBlockState(pos);
             final Block block = state.getBlock();
             final Identifier blockId = Registry.BLOCK.getId(block);
-            logger.info(()-> "checking "+blockId);
+            logger.info(() -> "checking " + blockId);
             if (this.checks.containsKey(blockId)) {
-                if (this.stepCounts.containsKey(pos)) {
-                    final VFConfig.RuntimeBlockConfig pc = this.checks.get(blockId);
-                    final BlockHistory bh = this.stepCounts.get(pos);
-                    if (( world.getTime() - bh.lastStepTimestamp) > 20*10) {
-                        logger.info(()-> "step timeout "+block+" "+bh);
-                        bh.stepCount = 1;
-                        bh.lastStepTimestamp = world.getTime();
-                    }
-                    if (bh.stepCount >= pc.stepCount()) {
-                        logger.info(()-> "changed! "+block+" "+bh);
-                        final Identifier nextId = pc.nextId();
-                        world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
-                        if (this.checks.containsKey(nextId)) {
-                            bh.stepCount = 0;
-                        } else {
-                            this.stepCounts.remove(pos);
-                        }
+                if (!this.stepCounts.containsKey(pos)) {
+                    this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
+                }
+                final VFConfig.RuntimeBlockConfig pc = this.checks.get(blockId);
+                final BlockHistory bh = this.stepCounts.get(pos);
+                if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
+                    logger.info(() -> "step timeout " + block + " " + bh);
+                    bh.stepCount = 1;
+                    bh.lastStepTimestamp = world.getTime();
+                } else {
+                    bh.stepCount++;
+                }
+                if (bh.stepCount >= pc.stepCount()) {
+                    logger.info(() -> "changed! " + block + " " + bh);
+                    final Identifier nextId = pc.nextId();
+                    world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
+                    if (this.checks.containsKey(nextId)) {
+                        bh.stepCount = 0;
                     } else {
-                        bh.stepCount++;
-                        logger.info(()-> "stepCount++ "+block+" "+bh);
+                        this.stepCounts.remove(pos);
                     }
                 } else {
-                    this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
+                    logger.info(() -> "stepCount++ " + block + " " + bh);
                 }
             }
         }
