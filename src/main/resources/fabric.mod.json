@@ -1,24 +1,23 @@
 {
   "schemaVersion": 1,
-  "id": "copperhopper",
+  "id": "vanillafootpaths",
   "version": "${version}",
-  "name": "Copper Hopper",
-  "description": "Vanilla-friendly item filtering.",
+  "name": "Vanilla Footpaths",
+  "description": "Vanilla-friendly footpaths",
   "authors": ["pcal.net"],
 
   "contact": {
-    "homepage": "https://github.com/pcal43/copper-hopper",
-    "sources": "https://github.com/pcal43/copper-hopper"
+    "homepage": "https://github.com/pcal43/vanilla-footpaths",
+    "sources": "https://github.com/pcal43/vanilla-footpaths"
   },
   "license": "MIT",
-  "icon": "assets/copperhopper/textures/item/copper_hopper.png",
+  "icon": "",
   "environment": "*",
   "entrypoints": {
-    "main": ["net.pcal.copperhopper.CohoInitializer"],
-    "client": ["net.pcal.copperhopper.CohoInitializer"]
+    "main": ["net.pcal.vanillafootpaths.VFInitializer"]
   },
   "mixins": [
-    "copperhopper.mixins.json"
+    "vanillafootpaths.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.3",

@@ -1,10 +1,11 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.pcal.copperhopper.mixins",
+  "package": "net.pcal.vanillafootpaths.mixins",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "CohoHopperBlockEntityMixin"
+    "BlockOnStepped",
+    "EntityMoved"
   ],
   "injectors": {
     "defaultRequire": 1
