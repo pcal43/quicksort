@@ -18,14 +18,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class)
 public class EntityMoved {
-    @Shadow private BlockPos blockPos;
+
+//    @Shadow private BlockPos blockPos;
 
     //@Inject(method = "setPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/ChunkSectionPos;getSectionCoord(I)I"))
-    @Redirect(method = "setPos", at =  @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;blockPos:Lnet/minecraft/util/math/BlockPos;", opcode = Opcodes.PUTFIELD))
-    void _entity_setPosition(Entity entity, BlockPos pos) {
-        this.blockPos = pos;
+    //@Redirect(method = "setPos", at =  @At(value = "FIELD", target = "Lnet/minecraft/entity/Entity;blockPos:Lnet/minecraft/util/math/BlockPos;", opcode = Opcodes.PUTFIELD))
+    //@Inject(method = "setPos", at = @At("RETURN"), slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;tagManager:Lnet/minecraft/tag/TagManager;", opcode = Opcodes.PUTFIELD)))
+
+
+    //@Inject(method = "tick()V", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lnet/minecraft/server/network/EntityTrackerEntry;trackingTick:I"), cancellable = true)
+
+    @Inject(method = "setPos", at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lnet/minecraft/entity/Entity;blockPos:Lnet/minecraft/util/math/BlockPos;"))
+    void _entity_setPosition(double x, double y, double z, CallbackInfo ci) {
+
+//        this.blockPos = pos;
+        Entity entity = (Entity)(Object)this;
         if (entity.getWorld().isClient()) return;
         VFService.getInstance().entitySteppedOnBlock(entity);
-        if (entity instanceof PlayerEntity) System.out.println("setPos! "+entity.getWorld().isClient());
     }
 }

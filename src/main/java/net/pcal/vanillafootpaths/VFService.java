@@ -1,13 +1,13 @@
 package net.pcal.vanillafootpaths;
 
-
-
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
+
 
 /**
  * Central singleton service.
@@ -27,11 +29,11 @@ public class VFService {
     // ===================================================================================
     // Constants
 
-    public static final String LOGGER_NAME = "CopperHopper";
-    public static final String LOG_PREFIX = "[CopperHopper] ";
+    public static final String LOGGER_NAME = "footpaths";
+    public static final String LOG_PREFIX = "[footpaths] ";
 
-    private static final String CONFIG_FILENAME = "vanillafootpaths.properties";
-    private static final String DEFAULT_CONFIG_FILENAME = "default-vanillafootpaths.properties";
+    private static final String CONFIG_FILENAME = "footpaths.properties";
+    private static final String DEFAULT_CONFIG_FILENAME = "default-footpaths.properties";
 
     // ===================================================================================
     // Singleton
@@ -48,11 +50,6 @@ public class VFService {
     }
 
 
-    record PathCheck(
-        int durability,
-        Block next
-    ) {}
-
     static final class BlockHistory {
         BlockHistory(int stepCount, long lastStepTimestamp) {
             this.stepCount = stepCount;
@@ -60,18 +57,25 @@ public class VFService {
         }
         int stepCount;
         long lastStepTimestamp;
-    }
 
+        @Override
+        public String toString() {
+            return "stepCount: "+this.stepCount+" lastStepTimestamp: "+this.lastStepTimestamp;
+        }
+    }
 
     // ===================================================================================
     // Constructors
 
+    private static int RESET_TICKS_DEFAULT = (20 * 60 * 24);
+
     VFService() {
         this.checks = new HashMap<>();
         this.stepCounts = new HashMap<>();
-        checks.put(Blocks.GRASS_BLOCK, new PathCheck(2, Blocks.DIRT));
-        checks.put(Blocks.DIRT, new PathCheck(5, Blocks.COARSE_DIRT));
-        checks.put(Blocks.COARSE_DIRT, new PathCheck(5, Blocks.DIRT_PATH));
+    }
+
+    public void initBlockConfig(Map<Identifier, VFConfig.RuntimeBlockConfig> config) {
+        this.checks = requireNonNull(config);
     }
 
 
@@ -80,9 +84,7 @@ public class VFService {
 
     private final Logger logger = LogManager.getLogger(LOGGER_NAME);
     private final Path configFilePath = Paths.get("config", CONFIG_FILENAME);
-    private final File configFile = configFilePath.toFile();
-    private final int checkFrequency = 10;
-    private final Map<Block, PathCheck> checks;
+    private Map<Identifier, VFConfig.RuntimeBlockConfig> checks;
     private final Map<BlockPos, BlockHistory> stepCounts;
 
     public void entitySteppedOnBlock(Entity entity) {
@@ -91,39 +93,34 @@ public class VFService {
             final World world = entity.getWorld();
             final BlockState state = world.getBlockState(pos);
             final Block block = state.getBlock();
-            System.out.println("checking "+block);
-            if (this.checks.containsKey(block)) {
+            final Identifier blockId = Registry.BLOCK.getId(block);
+            logger.info(()-> "checking "+blockId);
+            if (this.checks.containsKey(blockId)) {
                 if (this.stepCounts.containsKey(pos)) {
-                    final PathCheck pc = this.checks.get(block);
+                    final VFConfig.RuntimeBlockConfig pc = this.checks.get(blockId);
                     final BlockHistory bh = this.stepCounts.get(pos);
-                    if ((bh.lastStepTimestamp - world.getTime()) > 20*10) {
-                        System.out.println("too long!");
+                    if (( world.getTime() - bh.lastStepTimestamp) > 20*10) {
+                        logger.info(()-> "step timeout "+block+" "+bh);
                         bh.stepCount = 1;
                         bh.lastStepTimestamp = world.getTime();
                     }
-                    if (bh.stepCount >= pc.durability) {
-                        System.out.println("yes!");
-                        world.setBlockState(pos, pc.next().getDefaultState());
-                        bh.stepCount = 0;
+                    if (bh.stepCount >= pc.stepCount()) {
+                        logger.info(()-> "changed! "+block+" "+bh);
+                        final Identifier nextId = pc.nextId();
+                        world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
+                        if (this.checks.containsKey(nextId)) {
+                            bh.stepCount = 0;
+                        } else {
+                            this.stepCounts.remove(pos);
+                        }
                     } else {
                         bh.stepCount++;
-                        System.out.println("not yet "+bh.stepCount);
+                        logger.info(()-> "stepCount++ "+block+" "+bh);
                     }
                 } else {
                     this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
                 }
-            } else {
-                System.out.println("not in "+this.checks);
             }
         }
     }
-
-
-
-
-
-
-
-
-
 }
