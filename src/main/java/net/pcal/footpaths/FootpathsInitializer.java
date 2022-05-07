@@ -58,6 +58,7 @@ public class FootpathsInitializer implements ModInitializer {
             }
             defaultConfigResourceRaw = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
+        DEFAULT_CONFIG_PATH.getParent().toFile().mkdirs();
         Files.writeString(DEFAULT_CONFIG_PATH, defaultConfigResourceRaw);
         //
         // Figure out whether to use custom or default config
