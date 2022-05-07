@@ -1,24 +1,25 @@
 {
   "schemaVersion": 1,
-  "id": "copperhopper",
+  "id": "footpaths",
   "version": "${version}",
-  "name": "Copper Hopper",
-  "description": "Vanilla-friendly item filtering.",
-  "authors": ["pcal"],
+  "name": "Footpaths",
+  "description": "Vanilla-friendly footpaths",
+  "authors": ["pcal.net"],
 
   "contact": {
-    "homepage": "https://github.com/pcal43/",
-    "sources": "https://github.com/pcal43/copper-hopper"
+    "homepage": "https://github.com/pcal43/footpaths",
+    "sources": "https://github.com/pcal43/footpaths"
   },
-  "license": "Apache-2.0",
-  "icon": "icon.png",
+  "license": "MIT",
+  "icon": "",
   "environment": "*",
   "entrypoints": {
-    "main": ["net.pcal.copperhopper.CohoInitializer"],
-    "client": ["net.pcal.copperhopper.CohoInitializer"]
+    "main": [
+      "net.pcal.footpaths.FootpathsInitializer"
+    ]
   },
   "mixins": [
-    "copperhopper.mixins.json"
+    "footpaths.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.3",
@@ -26,7 +27,5 @@
     "minecraft": "1.18.x",
     "java": ">=17"
   },
-  "suggests": {
-    "another-mod": "*"
-  }
+  "conflicts": {}
 }

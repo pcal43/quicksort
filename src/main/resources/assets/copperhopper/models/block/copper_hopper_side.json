@@ -1,9 +1,0 @@
-{
-  "parent": "minecraft:block/hopper_side",
-  "textures": {
-    "particle": "minecraft:block/copper_block",
-    "top": "minecraft:block/copper_block",
-    "side": "minecraft:block/copper_block",
-    "inside": "minecraft:block/jukebox_side"
-  }
-}
