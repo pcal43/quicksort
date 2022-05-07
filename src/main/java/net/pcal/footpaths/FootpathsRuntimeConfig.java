@@ -9,7 +9,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Runtime representation of configuration.
+ * Runtime representation of configuration. FIXME should allow more than one RBC per block id
  */
 @SuppressWarnings("ClassCanBeRecord")
 public class FootpathsRuntimeConfig {
