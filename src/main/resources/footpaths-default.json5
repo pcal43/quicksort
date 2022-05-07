@@ -1,0 +1,40 @@
+//
+// Footpaths configuration file.
+//
+// To use a custom configuration, make a copy of this file named 'footpaths.json5' and make
+// whatever changes you want.  This file (footpaths-default.json5) will be completely ignored
+// if you do this.  Later versions of the mod might make updates to this file which you will
+// need to manually merge into your custom configuration.
+//
+// Configuration notes:
+// id: id of the block to track
+// nextId: id of the block to change the block into
+// stepCount: number of steps on the block after which the block is changed to the 'next'
+// timeoutTicks: number of ticks before the stepCount resets to zero.  1 tick = 0.05 seconds.
+//
+// Note this file isn't parsed with a true json5 parser; it's just preprocessed to strip lines
+// starting with '//'
+//
+
+{
+  'blocks' : [
+    {
+      'id': 'minecraft:grass_block',
+      'nextId': 'minecraft:dirt',
+      'stepCount': 0,
+      'timeoutTicks': 99999999
+    },
+    {
+      'id': 'minecraft:dirt',
+      'nextId': 'minecraft:coarse_dirt',
+      'stepCount': 5,
+      'timeoutTicks': 72000
+    },
+    {
+      'id': 'minecraft:snow_block',
+      'nextId': 'minecraft:snow',
+      'stepCount': 1,
+      'timeoutTicks': 72000
+    }
+  ]
+}

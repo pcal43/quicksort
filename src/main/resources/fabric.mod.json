@@ -1,23 +1,25 @@
 {
   "schemaVersion": 1,
-  "id": "vanillafootpaths",
+  "id": "footpaths",
   "version": "${version}",
-  "name": "Vanilla Footpaths",
+  "name": "Footpaths",
   "description": "Vanilla-friendly footpaths",
   "authors": ["pcal.net"],
 
   "contact": {
-    "homepage": "https://github.com/pcal43/vanilla-footpaths",
-    "sources": "https://github.com/pcal43/vanilla-footpaths"
+    "homepage": "https://github.com/pcal43/footpaths",
+    "sources": "https://github.com/pcal43/footpaths"
   },
   "license": "MIT",
   "icon": "",
   "environment": "*",
   "entrypoints": {
-    "main": ["net.pcal.vanillafootpaths.VFInitializer"]
+    "main": [
+      "net.pcal.footpaths.FootpathsInitializer"
+    ]
   },
   "mixins": [
-    "vanillafootpaths.mixins.json"
+    "footpaths.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.3",
@@ -25,7 +27,5 @@
     "minecraft": "1.18.x",
     "java": ">=17"
   },
-  "conflicts": {
-    "lithium": "*"
-  }
+  "conflicts": {}
 }

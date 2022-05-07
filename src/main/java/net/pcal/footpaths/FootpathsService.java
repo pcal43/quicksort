@@ -1,8 +1,7 @@
-package net.pcal.vanillafootpaths;
+package net.pcal.footpaths;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -12,7 +11,6 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -24,29 +22,26 @@ import static java.util.Objects.requireNonNull;
 /**
  * Central singleton service.
  */
-public class VFService {
+public class FootpathsService {
 
     // ===================================================================================
     // Constants
 
     public static final String LOGGER_NAME = "footpaths";
-    public static final String LOG_PREFIX = "[footpaths] ";
-
-    private static final String CONFIG_FILENAME = "footpaths.properties";
-    private static final String DEFAULT_CONFIG_FILENAME = "default-footpaths.properties";
+    public static final String LOG_PREFIX = "[Footpaths] ";
 
     // ===================================================================================
     // Singleton
 
     private static final class SingletonHolder {
-        private static final VFService INSTANCE;
+        private static final FootpathsService INSTANCE;
 
         static {
-            INSTANCE = new VFService();
+            INSTANCE = new FootpathsService();
         }
     }
 
-    public static VFService getInstance() {
+    public static FootpathsService getInstance() {
         return SingletonHolder.INSTANCE;
     }
 
@@ -69,23 +64,19 @@ public class VFService {
     // ===================================================================================
     // Constructors
 
-    private static int RESET_TICKS_DEFAULT = (20 * 60 * 24);
-
-    VFService() {
-        this.checks = new HashMap<>();
+    FootpathsService() {
         this.stepCounts = new HashMap<>();
     }
 
-    public void initBlockConfig(Map<Identifier, VFConfig.RuntimeBlockConfig> config) {
-        this.checks = requireNonNull(config);
+    public void initBlockConfig(FootpathsRuntimeConfig config) {
+        this.config = requireNonNull(config);
     }
 
     // ===================================================================================
     // Fields
 
     private final Logger logger = LogManager.getLogger(LOGGER_NAME);
-    private final Path configFilePath = Paths.get("config", CONFIG_FILENAME);
-    private Map<Identifier, VFConfig.RuntimeBlockConfig> checks;
+    private FootpathsRuntimeConfig config;
     private final Map<BlockPos, BlockHistory> stepCounts;
 
     public void entitySteppedOnBlock(Entity entity) {
@@ -96,11 +87,11 @@ public class VFService {
             final Block block = state.getBlock();
             final Identifier blockId = Registry.BLOCK.getId(block);
             logger.info(() -> "checking " + blockId);
-            if (this.checks.containsKey(blockId)) {
+            if (this.config.hasBlockConfig(blockId)) {
                 if (!this.stepCounts.containsKey(pos)) {
                     this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
                 }
-                final VFConfig.RuntimeBlockConfig pc = this.checks.get(blockId);
+                final FootpathsRuntimeConfig.RuntimeBlockConfig pc = this.config.getBlockConfig(blockId);
                 final BlockHistory bh = this.stepCounts.get(pos);
                 if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
                     logger.info(() -> "step timeout " + block + " " + bh);
@@ -113,7 +104,7 @@ public class VFService {
                     logger.info(() -> "changed! " + block + " " + bh);
                     final Identifier nextId = pc.nextId();
                     world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
-                    if (this.checks.containsKey(nextId)) {
+                    if (this.config.hasBlockConfig(nextId)) {
                         bh.stepCount = 0;
                     } else {
                         this.stepCounts.remove(pos);
