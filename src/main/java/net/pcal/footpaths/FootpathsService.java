@@ -45,7 +45,6 @@ public class FootpathsService {
         return SingletonHolder.INSTANCE;
     }
 
-
     static final class BlockHistory {
         BlockHistory(int stepCount, long lastStepTimestamp) {
             this.stepCount = stepCount;

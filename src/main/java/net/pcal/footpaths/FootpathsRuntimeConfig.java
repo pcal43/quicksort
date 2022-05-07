@@ -3,6 +3,7 @@ package net.pcal.footpaths;
 import net.minecraft.util.Identifier;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
@@ -48,7 +49,9 @@ public class FootpathsRuntimeConfig {
     public record RuntimeBlockConfig(
             Identifier nextId,
             int stepCount,
-            int timeoutTicks
+            int timeoutTicks,
+            List<Identifier> entityIds,
+            List<String> spawnGroups
     ) {}
 
 

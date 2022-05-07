@@ -1,5 +1,6 @@
 package net.pcal.footpaths;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
@@ -25,10 +26,16 @@ import static net.pcal.footpaths.FootpathsService.LOG_PREFIX;
 
 public class FootpathsInitializer implements ModInitializer {
 
+    // ===================================================================================
+    // Constants
+
     private static final Path CUSTOM_CONFIG_PATH = Paths.get("config", "footpaths.json5");
     private static final Path DEFAULT_CONFIG_PATH = Paths.get("config", "footpaths-default.json5");
     private static final String CONFIG_RESOURCE_NAME = "footpaths-default.json5";
 
+
+    // ===================================================================================
+    // ModInitializer implementation
 
     @Override
     public void onInitialize() {
@@ -36,18 +43,11 @@ public class FootpathsInitializer implements ModInitializer {
             initialize();
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
-
         }
     }
 
     private void initialize() throws IOException {
         final Logger logger = LogManager.getLogger(LOGGER_NAME);
-        try {
-            logger.info(LOG_PREFIX + "Initialized.");
-        } catch (Exception e) {
-            logger.catching(Level.ERROR, e);
-            logger.error(LOG_PREFIX + "Failed to initialize");
-        }
         //
         // Load the default configuration from resources and write it as the -default in the installation
         //
@@ -63,12 +63,15 @@ public class FootpathsInitializer implements ModInitializer {
         //
         // Figure out whether to use custom or default config
         //
+        final boolean isCustomConfig;
         final String effectiveConfigRaw;
         if (CUSTOM_CONFIG_PATH.toFile().exists()) {
             logger.info(LOG_PREFIX + "Using custom configuration.");
             effectiveConfigRaw = Files.readString(CUSTOM_CONFIG_PATH);
+            isCustomConfig = true;
         } else {
             effectiveConfigRaw = defaultConfigResourceRaw;
+            isCustomConfig = false;
         }
         //
         // Apply the config
@@ -76,21 +79,35 @@ public class FootpathsInitializer implements ModInitializer {
         final Gson gson = new Gson();
         final GsonConfig gsonConfig = gson.fromJson(stripComments(effectiveConfigRaw), GsonConfig.class);
         FootpathsService.getInstance().initBlockConfig(loadConfig(gsonConfig));
+        //
+        // All done
+        //
+        logger.info(LOG_PREFIX + "Initialized" + (isCustomConfig ? " with custom configuration." : "."));
     }
+
+    // ===================================================================================
+    // Private methods
 
     private static FootpathsRuntimeConfig loadConfig(GsonConfig config) {
         requireNonNull(config);
         final FootpathsRuntimeConfig.Builder builder = FootpathsRuntimeConfig.builder();
         for(GsonBlockConfig gsonBlock : config.blocks) {
             final Identifier blockId = new Identifier(requireNonNull(gsonBlock.id));
+
             final FootpathsRuntimeConfig.RuntimeBlockConfig rbc = new FootpathsRuntimeConfig.RuntimeBlockConfig(
                     gsonBlock.nextId == null ? null : new Identifier(gsonBlock.nextId),
                     requireNonNull(gsonBlock.stepCount),
-                    requireNonNull(gsonBlock.timeoutTicks)
+                    requireNonNull(gsonBlock.timeoutTicks),
+                    toIdentifierList(gsonBlock.entityIds),
+                    ImmutableList.copyOf(gsonBlock.spawnGroups)
             );
             builder.blockConfig(blockId, rbc);
         }
         return builder.build();
+    }
+
+    private static List<Identifier> toIdentifierList(List<String> ids) {
+        return null;
     }
 
     private static String stripComments(String json) throws IOException {
@@ -103,6 +120,9 @@ public class FootpathsInitializer implements ModInitializer {
         return out.toString();
     }
 
+    // ===================================================================================
+    // Gson model
+
     public static class GsonConfig {
         public List<GsonBlockConfig> blocks;
     }
@@ -112,5 +132,7 @@ public class FootpathsInitializer implements ModInitializer {
         public String nextId;
         Integer timeoutTicks;
         Integer stepCount;
+        List<String> entityIds;
+        List<String> spawnGroups;
     }
 }
