@@ -27,7 +27,7 @@
     {
       'id': 'minecraft:grass_block',
       'nextId': 'minecraft:dirt',
-      'stepCount': 0,
+      'stepCount': 3,
       'timeoutTicks': 99999999,
       'entityIds' : [ 'minecraft:player' ],
       'spawnGroups' : [ ]
@@ -35,15 +35,15 @@
     {
       'id': 'minecraft:dirt',
       'nextId': 'minecraft:coarse_dirt',
-      'stepCount': 5,
+      'stepCount': 3,
       'timeoutTicks': 72000,
       'entityIds' : [ 'minecraft:player' ],
       'spawnGroups' : [ ]
     },
     {
-      'id': 'minecraft:snow_block',
-      'nextId': 'minecraft:snow',
-      'stepCount': 1,
+      'id': 'minecraft:coarse_dirt',
+      'nextId': 'minecraft:dirt_path',
+      'stepCount': 3,
       'timeoutTicks': 72000,
       'entityIds' : [ 'minecraft:player' ],
       'spawnGroups' : [ ]
