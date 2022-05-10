@@ -1,6 +1,7 @@
 package net.pcal.footpaths;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
@@ -18,7 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 import static net.pcal.footpaths.FootpathsService.LOGGER_NAME;
@@ -93,21 +96,24 @@ public class FootpathsInitializer implements ModInitializer {
         final FootpathsRuntimeConfig.Builder builder = FootpathsRuntimeConfig.builder();
         for(GsonBlockConfig gsonBlock : config.blocks) {
             final Identifier blockId = new Identifier(requireNonNull(gsonBlock.id));
-
             final FootpathsRuntimeConfig.RuntimeBlockConfig rbc = new FootpathsRuntimeConfig.RuntimeBlockConfig(
                     gsonBlock.nextId == null ? null : new Identifier(gsonBlock.nextId),
                     requireNonNull(gsonBlock.stepCount),
                     requireNonNull(gsonBlock.timeoutTicks),
-                    toIdentifierList(gsonBlock.entityIds),
-                    ImmutableList.copyOf(gsonBlock.spawnGroups)
+                    toIdentifierSet(gsonBlock.entityIds),
+                    ImmutableSet.copyOf(gsonBlock.spawnGroups)
             );
             builder.blockConfig(blockId, rbc);
         }
         return builder.build();
     }
 
-    private static List<Identifier> toIdentifierList(List<String> ids) {
-        return null;
+    private static Set<Identifier> toIdentifierSet(List<String> rawIds) {
+        final ImmutableSet.Builder<Identifier> builder = ImmutableSet.builder();
+        for(String rawId : rawIds) {
+            builder.add(new Identifier(rawId));
+        }
+        return builder.build();
     }
 
     private static String stripComments(String json) throws IOException {

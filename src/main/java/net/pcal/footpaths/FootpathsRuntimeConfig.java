@@ -1,10 +1,12 @@
 package net.pcal.footpaths;
 
+import com.google.common.collect.ImmutableSet;
 import net.minecraft.util.Identifier;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -42,6 +44,10 @@ public class FootpathsRuntimeConfig {
         return this.blocksConfig.get(blockId);
     }
 
+    public Set<RuntimeBlockConfig> getAllConfigs() {
+        return ImmutableSet.copyOf(this.blocksConfig.values());
+    }
+
     public boolean hasBlockConfig(Identifier blockId) {
         return this.blocksConfig.containsKey(blockId);
     }
@@ -50,8 +56,8 @@ public class FootpathsRuntimeConfig {
             Identifier nextId,
             int stepCount,
             int timeoutTicks,
-            List<Identifier> entityIds,
-            List<String> spawnGroups
+            Set<Identifier> entityIds,
+            Set<String> spawnGroups
     ) {}
 
 
