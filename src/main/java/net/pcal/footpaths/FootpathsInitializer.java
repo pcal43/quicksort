@@ -1,14 +1,11 @@
 package net.pcal.footpaths;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -19,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +31,6 @@ public class FootpathsInitializer implements ModInitializer {
     private static final Path CUSTOM_CONFIG_PATH = Paths.get("config", "footpaths.json5");
     private static final Path DEFAULT_CONFIG_PATH = Paths.get("config", "footpaths-default.json5");
     private static final String CONFIG_RESOURCE_NAME = "footpaths-default.json5";
-
 
     // ===================================================================================
     // ModInitializer implementation
