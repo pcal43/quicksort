@@ -2,6 +2,7 @@ package net.pcal.footpaths;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.Identifier;
@@ -109,26 +110,26 @@ public class FootpathsService {
             if (!isMatchingEntity(entity, pc.entityIds(), pc.spawnGroups())) return;
             if (!this.stepCounts.containsKey(pos)) {
                 this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
-            }
-            final BlockHistory bh = this.stepCounts.get(pos);
-            if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
-                logger.info(() -> "step timeout " + block + " " + bh);
-                bh.stepCount = 1;
-                bh.lastStepTimestamp = world.getTime();
             } else {
-                bh.stepCount++;
-            }
-            if (bh.stepCount >= pc.stepCount()) {
-                logger.info(() -> "changed! " + block + " " + bh);
-                final Identifier nextId = pc.nextId();
-                world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
-                if (this.config.hasBlockConfig(nextId)) {
-                    bh.stepCount = 0;
+                final BlockHistory bh = this.stepCounts.get(pos);
+                if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
+                    logger.info(() -> "step timeout " + block + " " + bh);
+                    bh.stepCount = 1;
+                    bh.lastStepTimestamp = world.getTime();
                 } else {
-                    this.stepCounts.remove(pos);
+                    bh.stepCount++;
+                    logger.info(() -> "stepCount++ " + block + " " + bh);
                 }
-            } else {
-                logger.info(() -> "stepCount++ " + block + " " + bh);
+                if (bh.stepCount >= pc.stepCount()) {
+                    logger.info(() -> "changed! " + block + " " + bh);
+                    final Identifier nextId = pc.nextId();
+                    world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
+                    if (this.config.hasBlockConfig(nextId)) {
+                        bh.stepCount = 0;
+                    } else {
+                        this.stepCounts.remove(pos);
+                    }
+                }
             }
         }
     }
