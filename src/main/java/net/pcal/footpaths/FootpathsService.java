@@ -1,8 +1,8 @@
 package net.pcal.footpaths;
 
+import com.google.common.math.DoubleMath;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.Identifier;
@@ -94,6 +94,12 @@ public class FootpathsService {
     private final Map<BlockPos, BlockHistory> stepCounts;
 
     public void entitySteppedOnBlock(Entity entity) {
+        if (!DoubleMath.isMathematicalInteger(entity.getY())) {
+            // Ignore block changes for entities that aren't standing on the ground.
+            // Mainly because the jumping players register extra blockPos changes
+            // that I don't quite understand.
+            return;
+        }
         if (!isMatchingEntity(entity, this.entityIds, this.spawnGroups)) {
             // this is presumably going to be the case the vast majority of the time, so try to detect and
             // short-circuit it as quickly as possible.
