@@ -115,6 +115,7 @@ public class FootpathsService {
             final FootpathsRuntimeConfig.RuntimeBlockConfig pc = this.config.getBlockConfig(blockId);
             if (!isMatchingEntity(entity, pc.entityIds(), pc.spawnGroups())) return;
             if (!this.stepCounts.containsKey(pos)) {
+                //FIXME deal with stepCount=1 here
                 this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
             } else {
                 final BlockHistory bh = this.stepCounts.get(pos);

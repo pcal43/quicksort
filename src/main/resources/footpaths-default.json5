@@ -26,8 +26,8 @@
   'blocks' : [
     {
       'id': 'minecraft:grass_block',
-      'nextId': 'minecraft:dirt',
-      'stepCount': 3,
+      'nextId': 'minecraft:lava',
+      'stepCount': 1,
       'timeoutTicks': 99999999,
       'entityIds' : [ 'minecraft:player' ],
       'spawnGroups' : [ ]
