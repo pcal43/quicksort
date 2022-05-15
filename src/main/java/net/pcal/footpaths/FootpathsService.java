@@ -110,7 +110,7 @@ public class FootpathsService {
         final BlockState state = world.getBlockState(pos);
         final Block block = state.getBlock();
         final Identifier blockId = Registry.BLOCK.getId(block);
-        logger.info(() -> "checking " + blockId);
+        logger.debug(() -> "checking " + blockId);
         if (this.config.hasBlockConfig(blockId)) {
             final FootpathsRuntimeConfig.RuntimeBlockConfig pc = this.config.getBlockConfig(blockId);
             final BlockHistory bh = this.stepCounts.get(pos);
@@ -119,19 +119,19 @@ public class FootpathsService {
             if (bh == null) {
                 blockStepCount = 1;
             } else {
-                bh.lastStepTimestamp = world.getTime();
-                if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
-                    logger.info(() -> "step timeout " + block + " " + bh);
+                if (pc.timeoutTicks() > 0 && (world.getTime() - bh.lastStepTimestamp) > pc.timeoutTicks()) {
+                    logger.debug(() -> "step timeout " + block + " " + bh);
                     blockStepCount = 1;
                     bh.stepCount = 1;
                 } else {
+                    logger.debug(() -> "stepCount++ " + block + " " + bh);
                     bh.stepCount++;
                     blockStepCount = bh.stepCount;
-                    logger.info(() -> "stepCount++ " + block + " " + bh);
                 }
+                bh.lastStepTimestamp = world.getTime();
             }
             if (blockStepCount >= pc.stepCount()) {
-                logger.info(() -> "changed! " + block + " " + bh);
+                logger.debug(() -> "changed! " + block + " " + bh);
                 final Identifier nextId = pc.nextId();
                 world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
                 if (bh != null) this.stepCounts.remove(pos);
