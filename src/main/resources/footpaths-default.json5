@@ -26,7 +26,7 @@
   'blocks' : [
     {
       'id': 'minecraft:grass_block',
-      'nextId': 'minecraft:lava',
+      'nextId': 'minecraft:dirt',
       'stepCount': 1,
       'timeoutTicks': 99999999,
       'entityIds' : [ 'minecraft:player' ],

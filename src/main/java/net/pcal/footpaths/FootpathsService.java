@@ -113,33 +113,36 @@ public class FootpathsService {
         logger.info(() -> "checking " + blockId);
         if (this.config.hasBlockConfig(blockId)) {
             final FootpathsRuntimeConfig.RuntimeBlockConfig pc = this.config.getBlockConfig(blockId);
+            final BlockHistory bh = this.stepCounts.get(pos);
+            final int blockStepCount;
             if (!isMatchingEntity(entity, pc.entityIds(), pc.spawnGroups())) return;
-            if (!this.stepCounts.containsKey(pos)) {
-                //FIXME deal with stepCount=1 here
-                this.stepCounts.put(pos, new BlockHistory(1, world.getTime()));
+            if (bh == null) {
+                blockStepCount = 1;
             } else {
-                final BlockHistory bh = this.stepCounts.get(pos);
+                bh.lastStepTimestamp = world.getTime();
                 if ((world.getTime() - bh.lastStepTimestamp) > 20 * 10) {
                     logger.info(() -> "step timeout " + block + " " + bh);
+                    blockStepCount = 1;
                     bh.stepCount = 1;
-                    bh.lastStepTimestamp = world.getTime();
                 } else {
                     bh.stepCount++;
+                    blockStepCount = bh.stepCount;
                     logger.info(() -> "stepCount++ " + block + " " + bh);
                 }
-                if (bh.stepCount >= pc.stepCount()) {
-                    logger.info(() -> "changed! " + block + " " + bh);
-                    final Identifier nextId = pc.nextId();
-                    world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
-                    if (this.config.hasBlockConfig(nextId)) {
-                        bh.stepCount = 0;
-                    } else {
-                        this.stepCounts.remove(pos);
-                    }
+            }
+            if (blockStepCount >= pc.stepCount()) {
+                logger.info(() -> "changed! " + block + " " + bh);
+                final Identifier nextId = pc.nextId();
+                world.setBlockState(pos, Registry.BLOCK.get(nextId).getDefaultState());
+                if (bh != null) this.stepCounts.remove(pos);
+            } else {
+                if (bh == null) {
+                    this.stepCounts.put(pos, new BlockHistory(blockStepCount, world.getTime()));
                 }
             }
         }
     }
+
 
     private static boolean isMatchingEntity(Entity entity, Set<Identifier> entityIds, Set<String> spawnGroups) {
         if (entityIds != null) {
