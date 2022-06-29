@@ -27,7 +27,7 @@
     {
       'id': 'minecraft:grass_block',
       'nextId': 'minecraft:dirt',
-      'stepCount': 1,
+      'stepCount': 0,
       'timeoutTicks': 99999999,
       'entityIds' : [ 'minecraft:player' ],
       'spawnGroups' : [ ]
