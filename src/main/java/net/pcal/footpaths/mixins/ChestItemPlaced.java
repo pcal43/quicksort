@@ -1,8 +1,10 @@
 package net.pcal.footpaths.mixins;
 
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPointer;
@@ -12,20 +14,33 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
 import net.minecraft.util.math.PositionImpl;
 import net.minecraft.world.World;
+import net.pcal.footpaths.DropboxService;
 import net.pcal.footpaths.GhostItemEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(LootableContainerBlockEntity.class)
+@Mixin(ChestBlockEntity.class)
 public class ChestItemPlaced {
 
+
+    @Inject(method = "onClose", at = @At("TAIL"))
+    public void onClose(PlayerEntity player, CallbackInfo ci) {
+        Object o = this;
+        ChestBlockEntity e = (ChestBlockEntity) o;
+        DropboxService.getInstance().onChestClosed(e);
+
+    }
+
+    /**
     // get notified any time an entity's blockPos is updated
     @Inject(method = "setStack", at = @At("TAIL"))
     void _place_item_in_chest(int slot, ItemStack stack, CallbackInfo ci) {
         Object o = this;
-        BlockEntity e = (BlockEntity) o;
+        LootableContainerBlockEntity e = (LootableContainerBlockEntity) o;
+        DropboxService.getInstance().onChestItemPlaced(e, slot, stack);
+        /**
         World world = (World) e.getWorld();
         if (!world.isClient) {
             System.out.println("GOT IT " + this.getClass().getName());
@@ -43,11 +58,10 @@ public class ChestItemPlaced {
                     }
                 }
             };
-            ServerTickEvents.END_WORLD_TICK.register(listener);
- **/
+                ServerTickEvents.END_WORLD_TICK.register(listener);
         }
 
-    }
+    }**/
 
     private static Position getOutputLocation(BlockPointer pointer) {
         Direction direction = Direction.UP;
@@ -68,7 +82,14 @@ public class ChestItemPlaced {
             e -= 0.15625D;
         }
 
-        ItemEntity itemEntity = new GhostItemEntity(world, d, e, f, stack);
+        ItemEntity itemEntity = new ItemEntity(world, d, e, f, stack);
+        itemEntity.setNoGravity(true);
+        itemEntity.setOnGround(false);
+        itemEntity.setInvulnerable(true);
+        itemEntity.setVelocity(0,0.2,0);
+        itemEntity.setAir(0);
+//        itemEntity.setVelocityClient(0,0.2,0);
+
 
         //itemEntity.noClip = true;
 

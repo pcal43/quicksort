@@ -2,7 +2,9 @@ package net.pcal.footpaths;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +40,7 @@ public class FootpathsInitializer implements ModInitializer {
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
+        ServerTickEvents.END_WORLD_TICK.register( DropboxService.getInstance());
     }
 
     private void initialize() throws IOException {
