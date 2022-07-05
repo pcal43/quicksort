@@ -4,9 +4,7 @@
   "package": "net.pcal.footpaths.mixins",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ChestItemPlaced",
-    "ItemEntityMixin",
-    "EntityMixin"
+    "ChestItemPlaced"
   ],
   "injectors": {
     "defaultRequire": 1

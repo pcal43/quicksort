@@ -16,12 +16,15 @@ public class ItemEntityMixin {
      }
      **/
 
+    /**
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     public void tick(CallbackInfo ci) {
+
         final ItemEntity e = (ItemEntity)((Object)this);
         Vec3d movement = e.getVelocity();
         e.setPosition(e.getX() + movement.x, e.getY() + movement.y, e.getZ() + movement.z);
         ci.cancel();
     }
+     */
 
 }
