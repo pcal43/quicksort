@@ -77,6 +77,13 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 
     @Override
     public void onEndTick(ServerWorld world) {
+
+        /**
+        System.out.println("1 0 0 = " +Direction.getFacing(1, 0, 0));
+        System.out.println("1 5 0 = " +Direction.getFacing(1, 5, 0));
+        System.out.println("1 -5 0 = " +Direction.getFacing(1, -5, 0));
+        System.out.println("1 -5 -6 = " +Direction.getFacing(1, -5, -6));
+*/
         for(GhostItemEntity e : this.ghostItems) {
             if (e.getAge() > 40) {
                 e.setDespawnImmediately();
@@ -99,29 +106,54 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             }
             if (job.visibleChests.isEmpty()) continue;
             BlockEntity targetChest = job.visibleChests.get(world.random.nextBetween(0, job.visibleChests.size() - 1));
-            BlockPos target =targetChest.getPos();
+            BlockPos target = targetChest.getPos();
 
 
             Item item = stack.getItem();
             stack.setCount(stack.getCount() -1);
 
-            BlockPointerImpl blockPointerImpl = new BlockPointerImpl((ServerWorld) world, job.chest.getPos());
-            Position position = getOutputLocation(blockPointerImpl);
+            //BlockPointerImpl blockPointerImpl = new BlockPointerImpl((ServerWorld) world, job.chest.getPos());
+            Position outputLocation = getOutputLocation(job.chest.getPos(), target);
 
-            target.subtract(job.chest.getPos());
-            BlockPointerImpl tbp = new BlockPointerImpl((ServerWorld) world, target);
-            Position targetPos = new PositionImpl(tbp.getX(), tbp.getY(), tbp.getZ());
+            BlockPos pos = new BlockPos(outputLocation.getX(), outputLocation.getY(), outputLocation.getZ());
+            Vec3d origin = Vec3d.ofCenter(pos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
 
-            spawnItem(world, new ItemStack(item), 5, Direction.UP, position, targetPos);
+
+            //target.subtract(job.chest.getPos());
+            //BlockPointerImpl tbp = new BlockPointerImpl(world, target);
+            //Position targetPos = new PositionImpl(tbp.getX(), tbp.getY(), tbp.getZ());
+
+
+            GhostItemEntity itemEntity = new GhostItemEntity(world, origin.getX(), origin.getY(), origin.getZ(), stack);
+            itemEntity.setNoGravity(true);
+            itemEntity.setOnGround(false);
+            itemEntity.setInvulnerable(true);
+            double SPEED = .03D;
+            itemEntity.setVelocity((target.getX() - origin.getX()) * SPEED, (target.getY() - origin.getY()) * SPEED, (target.getZ() - origin.getZ()) * SPEED);
+            //itemEntity.setAir(0);
+
+            //itemEntity.itemAge = 5000;
+//        itemEntity.setVelocityClient(0,0.2,0);
+
+
+            //itemEntity.noClip = true;
+
+            //double g = world.random.nextDouble() * 0.1D + 0.2D;
+            //itemEntity.setVelocity(world.random.nextTriangular((double)side.getOffsetX() * g, 0.0172275D * (double)speed), world.random.nextTriangular(0.2D, 0.0172275D * (double)speed), world.random.nextTriangular((double)side.getOffsetZ() * g, 0.0172275D * (double)speed));
+//        itemEntity.setVelocity(0.0, 0.0, 0.0);
+//        itemEntity.setVelocityClient(0.0, 0.0, 0.0);
+            world.spawnEntity(itemEntity);
+            this.ghostItems.add(itemEntity);
+
+
+//            spawnItem(world, new ItemStack(item), 5, position, targetChest.getPos());
 
         }
     }
-//    GhostItemEntity itemEntity = new GhostItemEntity(world, d, e, f, stack);
 
-    private static List<LootableContainerBlockEntity> getVisibleChestsNear(World world, ChestBlockEntity chest,  int distance) {
+    private List<LootableContainerBlockEntity> getVisibleChestsNear(World world, ChestBlockEntity chest,  int distance) {
+        final GhostItemEntity itemEntity = new GhostItemEntity(world, 0,0,0, new ItemStack(Blocks.COBBLESTONE));
         System.out.println("looking for chests:");
-        BlockPos above= chest.getPos().mutableCopy().move(0,1,0);
-        Vec3d origin = Vec3d.ofCenter(above);
         List<LootableContainerBlockEntity> out = new ArrayList<>();
         for(int d = chest.getPos().getX() - distance; d <= chest.getPos().getX() + distance; d++) {
             for(int e = chest.getPos().getY() - distance; e <= chest.getPos().getY() + distance; e++) {
@@ -130,10 +162,15 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
                     if (!(bs instanceof LootableContainerBlockEntity)) continue;
                     Vec3d target = new Vec3d(bs.getPos().getX(), bs.getPos().getY(), bs.getPos().getZ());
+
+                    Position outputPos = getOutputLocation(chest.getPos(), bs.getPos());
+                    BlockPos pos = new BlockPos(outputPos.getX(), outputPos.getY(), outputPos.getZ());
+                    Vec3d origin = Vec3d.ofCenter(pos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
+
 //                    BlockHitResult result = world.raycastBlock(new BlockStateRaycastContext(origin, target,
 //                            blockState -> blockState.));
 
-                    BlockHitResult result = world.raycast(new RaycastContext(origin, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, world.getPlayers().get(0)));
+                    BlockHitResult result = world.raycast(new RaycastContext(origin, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, itemEntity));
                     if (result.getBlockPos().equals(bs.getPos())) {
                         System.out.println("VISIBLE! "+result.getBlockPos()+" "+bs.getPos());
                         out.add((LootableContainerBlockEntity) bs);
@@ -146,31 +183,35 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         return out;
     }
 
-    private static Position getOutputLocation(BlockPointer pointer) {
-        Direction direction = Direction.UP;
-        double d = pointer.getX() + 0.7D * (double)direction.getOffsetX();
-        double e = pointer.getY() + 0.7D * (double)direction.getOffsetY();
-        double f = pointer.getZ() + 0.7D * (double)direction.getOffsetZ();
+    private static Position getOutputLocation(BlockPos chest, BlockPos target) {
+        Direction direction = Direction.getFacing(target.getX() - chest.getX(), target.getY() - chest.getY(), target.getZ() - chest.getZ());
+        System.out.println("OUTPUT DIRECTION = "+direction);
+        double d = chest.getX() + 1 * (double)direction.getOffsetX();
+        double e = chest.getY() +1 * (double)direction.getOffsetY();
+        double f = chest.getZ() + 1 * (double)direction.getOffsetZ();
         return new PositionImpl(d, e, f);
     }
 
-    private void spawnItem(World world, ItemStack stack, int speed, Direction side, Position pos, Position targetPos) {
+    private void spawnItem(World world, ItemStack stack, int speed, Position pos, Position targetPos) {
         double d = pos.getX();
         double e = pos.getY();
         double f = pos.getZ();
-        if (side.getAxis() == Direction.Axis.Y) {
-            e -= 0.125D;
-        } else {
-            e -= 0.15625D;
-        }
+
+        /**
+         if (side.getAxis() == Direction.Axis.Y) {
+         e -= 0.125D;
+         } else {
+         e -= 0.15625D;
+         }**/
 
         GhostItemEntity itemEntity = new GhostItemEntity(world, d, e, f, stack);
-        itemEntity.setNoGravity(true);
-        itemEntity.setOnGround(false);
-        itemEntity.setInvulnerable(true);
+        //itemEntity.setNoGravity(true);
+        //itemEntity.setOnGround(false);
+        //itemEntity.setInvulnerable(true);
         double SPEED = .01D;
         itemEntity.setVelocity((targetPos.getX() - pos.getX()) * SPEED, (targetPos.getY() - pos.getY()) * SPEED, (targetPos.getZ() - pos.getZ()) * SPEED);
-        itemEntity.setAir(0);
+        //itemEntity.setAir(0);
+
         //itemEntity.itemAge = 5000;
 //        itemEntity.setVelocityClient(0,0.2,0);
 
