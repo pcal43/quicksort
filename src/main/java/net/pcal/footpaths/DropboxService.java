@@ -1,6 +1,8 @@
 package net.pcal.footpaths;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
@@ -9,12 +11,17 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPointer;
 import net.minecraft.util.math.BlockPointerImpl;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
 import net.minecraft.util.math.PositionImpl;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.BlockStateRaycastContext;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -35,23 +42,30 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
     }
 
     public void onChestClosed(ChestBlockEntity e) {
-        jobs.add(new ChestJob(e));
+        List<LootableContainerBlockEntity>  visibles = getVisibleChestsNear(e.getWorld(), e, 10);
+        if (!visibles.isEmpty()) {
+            jobs.add(new ChestJob(e, visibles));
+        }
     }
 
 
     private static class ChestJob {
-        ChestJob(ChestBlockEntity chest) {
-            this.chest = chest;
-            this.slot = 0;
-        }
+        List<LootableContainerBlockEntity> visibleChests;
         ChestBlockEntity chest;
         int slot = 0;
+
+        ChestJob(ChestBlockEntity chest, List<LootableContainerBlockEntity> visibleChests) {
+            this.chest = chest;
+            this.slot = 0;
+            this.visibleChests = visibleChests;
+        }
     }
 
 
     private final List<GhostItemEntity> ghostItems = new ArrayList<>();
     private final List<ChestJob> jobs = new ArrayList<>();
 
+    /**
     // get notified any time an entity's blockPos is updated
     public void onChestItemPlaced(LootableContainerBlockEntity e, int slot, ItemStack stack) {
         World world = e.getWorld();
@@ -59,7 +73,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             System.out.println("GOT IT " + this.getClass().getName());
         }
     }
-
+**/
 
     @Override
     public void onEndTick(ServerWorld world) {
@@ -68,29 +82,32 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                 e.setDespawnImmediately();
             }
         }
-        System.out.println("JOBS");
         Iterator<ChestJob> i = this.jobs.iterator();
         while(i.hasNext()) {
-            System.out.println("job");
             ChestJob job = i.next();
+            System.out.println("Processing job "+job.chest.getPos()+" "+job.visibleChests+" "+job.slot);
             if (job.slot >= job.chest.size()) {
                 System.out.println("removed job!");
                 i.remove();
                 continue;
             }
             ItemStack stack = job.chest.getStack(job.slot);
-            if (stack == null) {
+            if (stack == null || stack.isEmpty()) {
                 job.slot++;
                 System.out.println("next slot "+job.slot);
                 continue;
             }
+            if (job.visibleChests.isEmpty()) continue;
+            BlockEntity targetChest = job.visibleChests.get(world.random.nextBetween(0, job.visibleChests.size() - 1));
+            BlockPos target =targetChest.getPos();
+
+
             Item item = stack.getItem();
             stack.setCount(stack.getCount() -1);
 
             BlockPointerImpl blockPointerImpl = new BlockPointerImpl((ServerWorld) world, job.chest.getPos());
             Position position = getOutputLocation(blockPointerImpl);
 
-            BlockPos target = job.chest.getPos().mutableCopy().add(world.random.nextBetween(5, 10), world.random.nextBetween(5, 10), world.random.nextBetween(5,10));
             target.subtract(job.chest.getPos());
             BlockPointerImpl tbp = new BlockPointerImpl((ServerWorld) world, target);
             Position targetPos = new PositionImpl(tbp.getX(), tbp.getY(), tbp.getZ());
@@ -98,6 +115,35 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             spawnItem(world, new ItemStack(item), 5, Direction.UP, position, targetPos);
 
         }
+    }
+//    GhostItemEntity itemEntity = new GhostItemEntity(world, d, e, f, stack);
+
+    private static List<LootableContainerBlockEntity> getVisibleChestsNear(World world, ChestBlockEntity chest,  int distance) {
+        System.out.println("looking for chests:");
+        BlockPos above= chest.getPos().mutableCopy().move(0,1,0);
+        Vec3d origin = Vec3d.ofCenter(above);
+        List<LootableContainerBlockEntity> out = new ArrayList<>();
+        for(int d = chest.getPos().getX() - distance; d <= chest.getPos().getX() + distance; d++) {
+            for(int e = chest.getPos().getY() - distance; e <= chest.getPos().getY() + distance; e++) {
+                for(int f = chest.getPos().getZ() - distance; f <= chest.getPos().getZ() + distance; f++) {
+                    if (d == chest.getPos().getX() && e == chest.getPos().getY() && f == chest.getPos().getZ()) continue;
+                    BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
+                    if (!(bs instanceof LootableContainerBlockEntity)) continue;
+                    Vec3d target = new Vec3d(bs.getPos().getX(), bs.getPos().getY(), bs.getPos().getZ());
+//                    BlockHitResult result = world.raycastBlock(new BlockStateRaycastContext(origin, target,
+//                            blockState -> blockState.));
+
+                    BlockHitResult result = world.raycast(new RaycastContext(origin, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, world.getPlayers().get(0)));
+                    if (result.getBlockPos().equals(bs.getPos())) {
+                        System.out.println("VISIBLE! "+result.getBlockPos()+" "+bs.getPos());
+                        out.add((LootableContainerBlockEntity) bs);
+                    } else {
+                        System.out.println("NOT VISIBLE "+result.getBlockPos()+" "+bs.getPos());
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     private static Position getOutputLocation(BlockPointer pointer) {
