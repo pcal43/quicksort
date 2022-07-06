@@ -50,19 +50,32 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 
 
     private static class ChestJob {
+        private static final int JOB_DELAY = 3;
+
+        final List<GhostItemEntity> ghostItems = new ArrayList<>();
         List<LootableContainerBlockEntity> visibleChests;
         ChestBlockEntity chest;
         int slot = 0;
+        int tick = JOB_DELAY;
 
         ChestJob(ChestBlockEntity chest, List<LootableContainerBlockEntity> visibleChests) {
             this.chest = chest;
             this.slot = 0;
             this.visibleChests = visibleChests;
         }
+
+        boolean tick() {
+            if (tick++ >= JOB_DELAY) {
+                tick = 0;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
     }
 
 
-    private final List<GhostItemEntity> ghostItems = new ArrayList<>();
     private final List<ChestJob> jobs = new ArrayList<>();
 
     /**
@@ -75,8 +88,11 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
     }
 **/
 
+    private static final int GHOST_TTL = 7;
+
     @Override
     public void onEndTick(ServerWorld world) {
+
 
         /**
         System.out.println("1 0 0 = " +Direction.getFacing(1, 0, 0));
@@ -84,18 +100,22 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         System.out.println("1 -5 0 = " +Direction.getFacing(1, -5, 0));
         System.out.println("1 -5 -6 = " +Direction.getFacing(1, -5, -6));
 */
-        for(GhostItemEntity e : this.ghostItems) {
-            if (e.getAge() > 40) {
-                e.setDespawnImmediately();
-            }
-        }
         Iterator<ChestJob> i = this.jobs.iterator();
         while(i.hasNext()) {
             ChestJob job = i.next();
+            for(GhostItemEntity e : job.ghostItems) {
+                if (e.getItemAge() > GHOST_TTL) {
+                    e.setDespawnImmediately();
+                }
+            }
+
+            if (!job.tick()) continue;
             System.out.println("Processing job "+job.chest.getPos()+" "+job.visibleChests+" "+job.slot);
             if (job.slot >= job.chest.size()) {
-                System.out.println("removed job!");
-                i.remove();
+                if (job.ghostItems.isEmpty()) {
+                    System.out.println("removed job!");
+                    i.remove();
+                }
                 continue;
             }
             ItemStack stack = job.chest.getStack(job.slot);
@@ -106,14 +126,14 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             }
             if (job.visibleChests.isEmpty()) continue;
             BlockEntity targetChest = job.visibleChests.get(world.random.nextBetween(0, job.visibleChests.size() - 1));
-            BlockPos target = targetChest.getPos();
+            BlockPos targetPos = targetChest.getPos();
+            Vec3d target = Vec3d.ofCenter(targetPos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
 
 
-            Item item = stack.getItem();
-            stack.setCount(stack.getCount() -1);
+            stack.decrement(1);
 
             //BlockPointerImpl blockPointerImpl = new BlockPointerImpl((ServerWorld) world, job.chest.getPos());
-            Position outputLocation = getOutputLocation(job.chest.getPos(), target);
+            Position outputLocation = getOutputLocation(job.chest.getPos(), targetPos);
 
             BlockPos pos = new BlockPos(outputLocation.getX(), outputLocation.getY(), outputLocation.getZ());
             Vec3d origin = Vec3d.ofCenter(pos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
@@ -124,12 +144,12 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             //Position targetPos = new PositionImpl(tbp.getX(), tbp.getY(), tbp.getZ());
 
 
-            GhostItemEntity itemEntity = new GhostItemEntity(world, origin.getX(), origin.getY(), origin.getZ(), stack);
+            ItemStack ghostStack = new ItemStack(stack.getItem(), 1);
+            GhostItemEntity itemEntity = new GhostItemEntity(world, origin.getX(), origin.getY(), origin.getZ(), ghostStack);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);
-            double SPEED = .03D;
-            itemEntity.setVelocity((target.getX() - origin.getX()) * SPEED, (target.getY() - origin.getY()) * SPEED, (target.getZ() - origin.getZ()) * SPEED);
+            itemEntity.setVelocity((target.getX() - origin.getX()) / (GHOST_TTL+2), (target.getY() - origin.getY()) / (GHOST_TTL+2), (target.getZ() - origin.getZ()) / (GHOST_TTL+2));
             //itemEntity.setAir(0);
 
             //itemEntity.itemAge = 5000;
@@ -143,7 +163,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 //        itemEntity.setVelocity(0.0, 0.0, 0.0);
 //        itemEntity.setVelocityClient(0.0, 0.0, 0.0);
             world.spawnEntity(itemEntity);
-            this.ghostItems.add(itemEntity);
+            job.ghostItems.add(itemEntity);
 
 
 //            spawnItem(world, new ItemStack(item), 5, position, targetChest.getPos());
@@ -192,45 +212,6 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         return new PositionImpl(d, e, f);
     }
 
-    private void spawnItem(World world, ItemStack stack, int speed, Position pos, Position targetPos) {
-        double d = pos.getX();
-        double e = pos.getY();
-        double f = pos.getZ();
-
-        /**
-         if (side.getAxis() == Direction.Axis.Y) {
-         e -= 0.125D;
-         } else {
-         e -= 0.15625D;
-         }**/
-
-        GhostItemEntity itemEntity = new GhostItemEntity(world, d, e, f, stack);
-        //itemEntity.setNoGravity(true);
-        //itemEntity.setOnGround(false);
-        //itemEntity.setInvulnerable(true);
-        double SPEED = .01D;
-        itemEntity.setVelocity((targetPos.getX() - pos.getX()) * SPEED, (targetPos.getY() - pos.getY()) * SPEED, (targetPos.getZ() - pos.getZ()) * SPEED);
-        //itemEntity.setAir(0);
-
-        //itemEntity.itemAge = 5000;
-//        itemEntity.setVelocityClient(0,0.2,0);
-
-
-        //itemEntity.noClip = true;
-
-        //double g = world.random.nextDouble() * 0.1D + 0.2D;
-        //itemEntity.setVelocity(world.random.nextTriangular((double)side.getOffsetX() * g, 0.0172275D * (double)speed), world.random.nextTriangular(0.2D, 0.0172275D * (double)speed), world.random.nextTriangular((double)side.getOffsetZ() * g, 0.0172275D * (double)speed));
-//        itemEntity.setVelocity(0.0, 0.0, 0.0);
-//        itemEntity.setVelocityClient(0.0, 0.0, 0.0);
-        world.spawnEntity(itemEntity);
-        this.ghostItems.add(itemEntity);
-//        itemEntity.setNoGravity(true);
-//        itemEntity.setOnGround(false);
-//        itemEntity.noClip = true;
-
-//        itemEntity.setBoundingBox(NULL_BOX);
-
-    }
 
 
 }
