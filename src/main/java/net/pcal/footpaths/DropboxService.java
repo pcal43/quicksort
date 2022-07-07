@@ -5,11 +5,13 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Pair;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -119,6 +121,15 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         }
 
         private void createGhost(Item item, VisibleChest targetChest) {
+            World world = this.originChest.getWorld();
+            world.playSound(
+                    null, // Player - if non-null, will play sound for every nearby player *except* the specified player
+                    this.originChest.getPos(), // The position of where the sound will come from
+                    SoundEvents.UI_TOAST_OUT, // The sound that will play, in this case, the sound the anvil plays when it lands.
+                    SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
+                    .75f, //Volume multiplier, 1 is normal, 0.5 is half volume, etc
+                    2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+            );
             ItemStack ghostStack = new ItemStack(item, 1);
             GhostItemEntity itemEntity = new GhostItemEntity(this.originChest.getWorld(),
                     targetChest.originPos.getX(), targetChest.originPos.getY(), targetChest.originPos.getZ(), ghostStack);
@@ -170,7 +181,11 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                 } else {
                     final Item item = this.originStack.getItem();
                     this.originStack.decrement(1);
-                    candidate.targetChest.getStack(targetSlot).increment(1);
+                    if (candidate.targetChest.getStack(targetSlot).isEmpty()) {
+                        candidate.targetChest.setStack(targetSlot, new ItemStack(item, 1));
+                    } else {
+                        candidate.targetChest.getStack(targetSlot).increment(1);
+                    }
                     gc.createGhost(item, candidate);
                     return true;
                 }
@@ -210,31 +225,10 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 
     private final List<ChestJob> jobs = new ArrayList<>();
 
-
-
-
-    /**
-    // get notified any time an entity's blockPos is updated
-    public void onChestItemPlaced(LootableContainerBlockEntity e, int slot, ItemStack stack) {
-        World world = e.getWorld();
-        if (!world.isClient) {
-            System.out.println("GOT IT " + this.getClass().getName());
-        }
-    }
-**/
-
     private static final int GHOST_TTL = 7;
 
     @Override
     public void onEndTick(ServerWorld world) {
-
-
-        /**
-         System.out.println("1 0 0 = " +Direction.getFacing(1, 0, 0));
-         System.out.println("1 5 0 = " +Direction.getFacing(1, 5, 0));
-         System.out.println("1 -5 0 = " +Direction.getFacing(1, -5, 0));
-         System.out.println("1 -5 -6 = " +Direction.getFacing(1, -5, -6));
-         */
         if (this.jobs.isEmpty()) return;
         Iterator<ChestJob> i = this.jobs.iterator();
         while (i.hasNext()) {
@@ -265,8 +259,8 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
                     if (!(bs instanceof LootableContainerBlockEntity targetChest)) continue;
 
-                    Vec3d origin = getTransferPoint(originChest.getPos(), targetChest.getPos());
-                    Vec3d target = getTransferPoint(targetChest.getPos(), originChest.getPos());
+                    Vec3d origin = getTransferPoint(itemEntity, originChest.getPos(), targetChest.getPos());
+                    Vec3d target = getTransferPoint(itemEntity, targetChest.getPos(), originChest.getPos());
 
                     BlockHitResult result = world.raycast(new RaycastContext(origin, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, itemEntity));
                     if (result.getPos().equals(target)) {
@@ -285,11 +279,11 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         return out;
     }
 
-    private static Vec3d getTransferPoint(BlockPos origin, BlockPos target) {
+    private static Vec3d getTransferPoint(ItemEntity itemEntity, BlockPos origin, BlockPos target) {
         Vec3d origin3d = Vec3d.ofCenter(origin);
         Vec3d target3d = Vec3d.ofCenter(target);
         Vec3d vector = target3d.subtract(origin3d).normalize();
-        return origin3d.add(vector).add(0, -0.5D, 0);
+        return origin3d.add(vector).add(0, itemEntity.getHeight()/2, 0);
 
     }
 }
