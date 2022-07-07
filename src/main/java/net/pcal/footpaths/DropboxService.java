@@ -1,36 +1,23 @@
 package net.pcal.footpaths;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPointer;
-import net.minecraft.util.math.BlockPointerImpl;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Position;
-import net.minecraft.util.math.PositionImpl;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.BlockStateRaycastContext;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 public class DropboxService implements ServerTickEvents.EndWorldTick {
 
@@ -42,7 +29,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
     }
 
     public void onChestClosed(ChestBlockEntity e) {
-        List<LootableContainerBlockEntity>  visibles = getVisibleChestsNear(e.getWorld(), e, 10);
+        List<VisibleChest>  visibles = getVisibleChestsNear(e.getWorld(), e, 10);
         if (!visibles.isEmpty()) {
             jobs.add(new ChestJob(e, visibles));
         }
@@ -53,13 +40,13 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         private static final int JOB_DELAY = 3;
 
         final List<GhostItemEntity> ghostItems = new ArrayList<>();
-        List<LootableContainerBlockEntity> visibleChests;
-        ChestBlockEntity chest;
+        List<VisibleChest> visibleChests;
+        ChestBlockEntity originChest;
         int slot = 0;
         int tick = JOB_DELAY;
 
-        ChestJob(ChestBlockEntity chest, List<LootableContainerBlockEntity> visibleChests) {
-            this.chest = chest;
+        ChestJob(ChestBlockEntity chest, List<VisibleChest> visibleChests) {
+            this.originChest = chest;
             this.slot = 0;
             this.visibleChests = visibleChests;
         }
@@ -103,53 +90,41 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         Iterator<ChestJob> i = this.jobs.iterator();
         while(i.hasNext()) {
             ChestJob job = i.next();
-            for(GhostItemEntity e : job.ghostItems) {
+            Iterator<GhostItemEntity> g = job.ghostItems.iterator();
+            while(g.hasNext()) {
+                final GhostItemEntity e = g.next();
                 if (e.getItemAge() > GHOST_TTL) {
                     e.setDespawnImmediately();
+                    g.remove();
                 }
             }
 
             if (!job.tick()) continue;
-            System.out.println("Processing job "+job.chest.getPos()+" "+job.visibleChests+" "+job.slot);
-            if (job.slot >= job.chest.size()) {
+            //System.out.println("Processing job "+job.chest.getPos()+" "+job.visibleChests+" "+job.slot);
+            if (job.slot >= job.originChest.size()) {
                 if (job.ghostItems.isEmpty()) {
-                    System.out.println("removed job!");
+                    System.out.println("JOBS DONE!");
                     i.remove();
                 }
                 continue;
             }
-            ItemStack stack = job.chest.getStack(job.slot);
+            ItemStack stack = job.originChest.getStack(job.slot);
             if (stack == null || stack.isEmpty()) {
                 job.slot++;
                 System.out.println("next slot "+job.slot);
                 continue;
             }
             if (job.visibleChests.isEmpty()) continue;
-            BlockEntity targetChest = job.visibleChests.get(world.random.nextBetween(0, job.visibleChests.size() - 1));
-            BlockPos targetPos = targetChest.getPos();
-            Vec3d target = Vec3d.ofCenter(targetPos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
-
-
+            int chestIndex = world.random.nextBetween(0, job.visibleChests.size() - 1);
+            VisibleChest visible = job.visibleChests.get(chestIndex);
             stack.decrement(1);
 
-            //BlockPointerImpl blockPointerImpl = new BlockPointerImpl((ServerWorld) world, job.chest.getPos());
-            Position outputLocation = getOutputLocation(job.chest.getPos(), targetPos);
-
-            BlockPos pos = new BlockPos(outputLocation.getX(), outputLocation.getY(), outputLocation.getZ());
-            Vec3d origin = Vec3d.ofCenter(pos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
-
-
-            //target.subtract(job.chest.getPos());
-            //BlockPointerImpl tbp = new BlockPointerImpl(world, target);
-            //Position targetPos = new PositionImpl(tbp.getX(), tbp.getY(), tbp.getZ());
-
-
             ItemStack ghostStack = new ItemStack(stack.getItem(), 1);
-            GhostItemEntity itemEntity = new GhostItemEntity(world, origin.getX(), origin.getY(), origin.getZ(), ghostStack);
+            GhostItemEntity itemEntity = new GhostItemEntity(world, visible.originPos.getX(), visible.originPos.getY(), visible.originPos.getZ(), ghostStack);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);
-            itemEntity.setVelocity((target.getX() - origin.getX()) / (GHOST_TTL+2), (target.getY() - origin.getY()) / (GHOST_TTL+2), (target.getZ() - origin.getZ()) / (GHOST_TTL+2));
+            itemEntity.setVelocity(visible.itemVelocity);
             //itemEntity.setAir(0);
 
             //itemEntity.itemAge = 5000;
@@ -171,31 +146,36 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         }
     }
 
-    private List<LootableContainerBlockEntity> getVisibleChestsNear(World world, ChestBlockEntity chest,  int distance) {
+    private static record VisibleChest(
+            LootableContainerBlockEntity targetChest,
+            Vec3d originPos,
+            Vec3d targetPos,
+            Vec3d itemVelocity) {}
+
+    private List<VisibleChest> getVisibleChestsNear(World world, ChestBlockEntity originChest,  int distance) {
         final GhostItemEntity itemEntity = new GhostItemEntity(world, 0,0,0, new ItemStack(Blocks.COBBLESTONE));
         System.out.println("looking for chests:");
-        List<LootableContainerBlockEntity> out = new ArrayList<>();
-        for(int d = chest.getPos().getX() - distance; d <= chest.getPos().getX() + distance; d++) {
-            for(int e = chest.getPos().getY() - distance; e <= chest.getPos().getY() + distance; e++) {
-                for(int f = chest.getPos().getZ() - distance; f <= chest.getPos().getZ() + distance; f++) {
-                    if (d == chest.getPos().getX() && e == chest.getPos().getY() && f == chest.getPos().getZ()) continue;
+        List<VisibleChest> out = new ArrayList<>();
+        for(int d = originChest.getPos().getX() - distance; d <= originChest.getPos().getX() + distance; d++) {
+            for(int e = originChest.getPos().getY() - distance; e <= originChest.getPos().getY() + distance; e++) {
+                for(int f = originChest.getPos().getZ() - distance; f <= originChest.getPos().getZ() + distance; f++) {
+                    if (d == originChest.getPos().getX() && e == originChest.getPos().getY() && f == originChest.getPos().getZ()) continue;
                     BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
-                    if (!(bs instanceof LootableContainerBlockEntity)) continue;
-                    Vec3d target = new Vec3d(bs.getPos().getX(), bs.getPos().getY(), bs.getPos().getZ());
+                    if (!(bs instanceof LootableContainerBlockEntity targetChest)) continue;
 
-                    Position outputPos = getOutputLocation(chest.getPos(), bs.getPos());
-                    BlockPos pos = new BlockPos(outputPos.getX(), outputPos.getY(), outputPos.getZ());
-                    Vec3d origin = Vec3d.ofCenter(pos);// new Vec3d(outputPos.getX(), outputPos.getY(), outputPos.getZ());
-
-//                    BlockHitResult result = world.raycastBlock(new BlockStateRaycastContext(origin, target,
-//                            blockState -> blockState.));
+                    Vec3d origin = getTransferPoint(originChest.getPos(), targetChest.getPos());
+                    Vec3d target = getTransferPoint(targetChest.getPos(), originChest.getPos());
 
                     BlockHitResult result = world.raycast(new RaycastContext(origin, target, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, itemEntity));
-                    if (result.getBlockPos().equals(bs.getPos())) {
-                        System.out.println("VISIBLE! "+result.getBlockPos()+" "+bs.getPos());
-                        out.add((LootableContainerBlockEntity) bs);
+                    if (result.getPos().equals(target)) {
+                        System.out.println("VISIBLE! "+result.getBlockPos()+" "+targetChest.getPos());
+                        Vec3d itemVelocity = new Vec3d(
+                                (target.getX() - origin.getX()) / (GHOST_TTL),
+                                (target.getY() - origin.getY()) / (GHOST_TTL),
+                                (target.getZ() - origin.getZ()) / (GHOST_TTL));
+                        out.add(new VisibleChest(targetChest, origin, target, itemVelocity));
                     } else {
-                        System.out.println("NOT VISIBLE "+result.getBlockPos()+" "+bs.getPos());
+                        System.out.println("NOT VISIBLE "+result.getBlockPos()+" "+targetChest.getPos());
                     }
                 }
             }
@@ -203,15 +183,11 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         return out;
     }
 
-    private static Position getOutputLocation(BlockPos chest, BlockPos target) {
-        Direction direction = Direction.getFacing(target.getX() - chest.getX(), target.getY() - chest.getY(), target.getZ() - chest.getZ());
-        System.out.println("OUTPUT DIRECTION = "+direction);
-        double d = chest.getX() + 1 * (double)direction.getOffsetX();
-        double e = chest.getY() +1 * (double)direction.getOffsetY();
-        double f = chest.getZ() + 1 * (double)direction.getOffsetZ();
-        return new PositionImpl(d, e, f);
+    private static Vec3d getTransferPoint(BlockPos origin, BlockPos target) {
+        Vec3d origin3d = Vec3d.ofCenter(origin);
+        Vec3d target3d = Vec3d.ofCenter(target);
+        Vec3d vector = target3d.subtract(origin3d).normalize();
+        return origin3d.add(vector).add(0, -0.5D, 0);
+
     }
-
-
-
 }
