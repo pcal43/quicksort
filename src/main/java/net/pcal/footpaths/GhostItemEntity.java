@@ -13,12 +13,6 @@ public class GhostItemEntity extends ItemEntity {
 
     public GhostItemEntity(World world, double d, double e, double f, ItemStack stack) {
         super(world, d, e, f, stack);
-
-    }
-
-
-    public int getAge() {
-        return this.age;
     }
 
 

@@ -27,10 +27,14 @@ public class ChestItemPlaced {
 
     @Inject(method = "onClose", at = @At("TAIL"))
     public void onClose(PlayerEntity player, CallbackInfo ci) {
-        Object o = this;
-        ChestBlockEntity e = (ChestBlockEntity) o;
+        ChestBlockEntity e = (ChestBlockEntity)(Object)this;
         DropboxService.getInstance().onChestClosed(e);
+    }
 
+    @Inject(method = "onOpen", at = @At("TAIL"))
+    public void onOpen(PlayerEntity player, CallbackInfo ci) {
+        ChestBlockEntity e = (ChestBlockEntity)(Object)this;
+        DropboxService.getInstance().onChestOpened(e);
     }
 
     /**
