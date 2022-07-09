@@ -286,6 +286,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     if (d == originChest.getPos().getX() && e == originChest.getPos().getY() && f == originChest.getPos().getZ()) continue;
                     BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
                     if (!(bs instanceof ChestBlockEntity targetChest)) continue;
+                    if (getDropboxConfigFor((ChestBlockEntity) bs) != null) continue; // don't send to other sorting chests
 
                     Vec3d origin = getTransferPoint(itemEntity, originChest.getPos(), targetChest.getPos());
                     Vec3d target = getTransferPoint(itemEntity, targetChest.getPos(), originChest.getPos());

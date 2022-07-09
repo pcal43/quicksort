@@ -27,8 +27,8 @@ class DropboxConfigParser {
             final List<DropboxConfig.DropboxChestConfig> chests = new ArrayList<>();
             for (DropboxChestConfigGson chestGson : configGson.chests) {
                 chests.add(new DropboxConfig.DropboxChestConfig(
-                        new Identifier(chestGson.id),
-                        chestGson.range,
+                        new Identifier(requireNonNull(chestGson.baseBlockId, "baseBlockId must be set")),
+                        requireNonNull(chestGson.range, "range must be set"),
                         chestGson.cooldownTicks,
                         chestGson.animationTicks,
                         chestGson.soundVolume,
@@ -61,7 +61,7 @@ class DropboxConfigParser {
     }
 
     public static class DropboxChestConfigGson {
-        public String id;
+        public String baseBlockId;
         Integer range;
         int cooldownTicks;
         int animationTicks;
