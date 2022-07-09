@@ -288,6 +288,5 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         Vec3d target3d = Vec3d.ofCenter(target);
         Vec3d vector = target3d.subtract(origin3d).normalize();
         return origin3d.add(vector).add(0, -0.5D, 0);
-
     }
 }
