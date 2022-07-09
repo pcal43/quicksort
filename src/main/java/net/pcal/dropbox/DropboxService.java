@@ -10,6 +10,7 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -22,6 +23,7 @@ import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.pcal.dropbox.DropboxConfig.DropboxChestConfig;
 
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -140,6 +142,13 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                 if (e.getItemAge() > this.chestConfig.animationTicks()) {
                     e.setDespawnImmediately();
                     g.remove();
+                    /**
+                    e.getWorld().addParticle(DustParticleEffect.DEFAULT,
+                     originChest.getPos().getX(),
+                     originChest.getPos().getY() + 1,
+                     originChest.getPos().getZ(),
+                     0.0, -0.2, 0.0);
+                     */
                 }
             }
             if (!this.isTransferComplete) {
@@ -147,6 +156,17 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     tick = 0;
                     if (!doOneTransfer()) this.isTransferComplete = true;
                 }
+                ServerWorld sw = (ServerWorld)this.originChest.getWorld();
+                for(SlotJob j : this.slotJobs) {
+                    for (TargetChest t : j.candidateChests) {
+                        sw.spawnParticles(DustParticleEffect.DEFAULT,
+                                t.targetPos().getX(),
+                                t.targetPos.getY(),
+                                t.targetPos.getZ(),
+                                1, 0,-0.0, 0.0, .2);
+                    }
+                }
+
             }
         }
 

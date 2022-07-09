@@ -3,7 +3,7 @@
 Footpaths is a Fabric minecraft mod that changes blocks as they are walked on.  By default, grass blocks will change to dirt blocks and then to paths.
  
 ## Features
-* Vanilla-friendly.  Does NOT add any new blocks to your server.
+* Vanilla-friendly.  Does NOT add any new blocks to your server.xx
 * Fully customizable
 * Mobs and players can leave trails
 * Use whatever blocks you want
