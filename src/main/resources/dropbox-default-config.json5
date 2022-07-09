@@ -1,0 +1,27 @@
+//
+// Dropbox configuration file.
+//
+// Note that this file isn't parsed with a true json5 parser; it's just preprocessed to strip
+// lines starting with '//'
+//
+
+{
+  'chests' : [
+    {
+      'baseBlockId': 'minecraft:diamond_block',
+      'range': 10,
+      'cooldownTicks': 10,
+      'animationTicks': 7,
+      'soundVolume': 0.75,
+      'soundPitch': 2.0
+    },
+    {
+      'baseBlockId': 'minecraft:emerald_block',
+      'range': 5,
+      'cooldownTicks': 10,
+      'animationTicks': 7,
+      'soundVolume': 0.75,
+      'soundPitch': 2.0
+    }
+  ]
+}

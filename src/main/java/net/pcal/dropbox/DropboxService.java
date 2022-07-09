@@ -1,6 +1,7 @@
-package net.pcal.footpaths;
+package net.pcal.dropbox;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -12,26 +13,50 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
+import net.pcal.dropbox.DropboxConfig.DropboxChestConfig;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
 
 public class DropboxService implements ServerTickEvents.EndWorldTick {
 
+    // ===================================================================================
+    // Constants
+
+    public static final String LOGGER_NAME = "footpaths";
+    public static final String LOG_PREFIX = "[Footpaths] ";
+
+    // ===================================================================================
+    // Fields
+
     private static final DropboxService INSTANCE = new DropboxService();
 
     public static DropboxService getInstance() {
         return INSTANCE;
+    }
 
+    private Map<Identifier, DropboxChestConfig> config = null;
+
+
+    void initConfig(DropboxConfig config) {
+        if (this.config != null) throw new IllegalStateException();
+        this.config = new HashMap<>();
+        for(final DropboxChestConfig chest : config.chestConfigs()){
+            this.config.put(chest.baseBlockId(), chest);
+        }
     }
 
     public void onChestOpened(ChestBlockEntity e) {
@@ -43,18 +68,37 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
     }
 
     public void onChestClosed(ChestBlockEntity e) {
-        if (isDropbox(e)) {
-            final List<TargetChest> visibles = getVisibleChestsNear(e.getWorld(), e, 5);
+        final DropboxChestConfig chestConfig = getDropboxConfigFor(e);
+        if (chestConfig != null) {
+            final List<TargetChest> visibles = getVisibleChestsNear(chestConfig, e.getWorld(), e, chestConfig.range());
             if (!visibles.isEmpty()) {
-                final ChestJob job = ChestJob.create(e, visibles);
+                final ChestJob job = ChestJob.create(chestConfig, e, visibles);
                 if (job != null) jobs.add(job);
             }
         }
     }
 
-    private boolean isDropbox(ChestBlockEntity chest) {
-        return chest.getWorld().getBlockState(chest.getPos().down()).getBlock() == Blocks.DIAMOND_BLOCK;
+    @Override
+    public void onEndTick(ServerWorld world) {
+        if (this.jobs.isEmpty()) return;
+        Iterator<ChestJob> i = this.jobs.iterator();
+        while (i.hasNext()) {
+            ChestJob job = i.next();
+            if (job.isDone()) {
+                System.out.println("JOB DONE!");
+                i.remove();
+            } else {
+                job.tick();
+            }
+        }
     }
+
+    private DropboxChestConfig getDropboxConfigFor(ChestBlockEntity chest) {
+        final Block baseBlock = chest.getWorld().getBlockState(chest.getPos().down()).getBlock();
+        final Identifier baseBlockId = Registry.BLOCK.getId(baseBlock);
+        return this.config.get(baseBlockId);
+    }
+
 
     @FunctionalInterface
     interface GhostCreator {
@@ -63,24 +107,24 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 
     private static class ChestJob {
 
-        private static final int TRANSFER_COOLDOWN = 10;
-
+        private final DropboxChestConfig chestConfig;
         private final List<GhostItemEntity> ghostItems = new ArrayList<>();
         private final List<SlotJob> slotJobs;
         private final ChestBlockEntity originChest;
         int tick = 0;
         private boolean isTransferComplete = false;
 
-        static ChestJob create(ChestBlockEntity originChest, List<TargetChest> visibleTargets) {
+        static ChestJob create(DropboxChestConfig chestConfig, ChestBlockEntity originChest, List<TargetChest> visibleTargets) {
             final List<SlotJob> slotJobs = new ArrayList<>();
             for (int slot = 0; slot < originChest.size(); slot++) {
-                SlotJob slotJob = SlotJob.create(originChest, slot, visibleTargets);
+                SlotJob slotJob = SlotJob.create(chestConfig, originChest, slot, visibleTargets);
                 if (slotJob != null ) slotJobs.add(slotJob);
             }
-            return slotJobs.isEmpty() ? null : new ChestJob(originChest, slotJobs);
+            return slotJobs.isEmpty() ? null : new ChestJob(chestConfig, originChest, slotJobs);
         }
 
-        ChestJob(ChestBlockEntity originChest, List<SlotJob> slotJobs) {
+        ChestJob(DropboxChestConfig chestConfig, ChestBlockEntity originChest, List<SlotJob> slotJobs) {
+            this.chestConfig = requireNonNull(chestConfig);
             this.originChest = requireNonNull(originChest);
             this.slotJobs = requireNonNull(slotJobs);
         }
@@ -93,13 +137,13 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
             final Iterator<GhostItemEntity> g = this.ghostItems.iterator();
             while(g.hasNext()) {
                 final GhostItemEntity e = g.next();
-                if (e.getItemAge() > GHOST_TTL) {
+                if (e.getItemAge() > this.chestConfig.animationTicks()) {
                     e.setDespawnImmediately();
                     g.remove();
                 }
             }
             if (!this.isTransferComplete) {
-                if (tick++ > TRANSFER_COOLDOWN) {
+                if (tick++ > this.chestConfig.cooldownTicks()) {
                     tick = 0;
                     if (!doOneTransfer()) this.isTransferComplete = true;
                 }
@@ -127,8 +171,8 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     this.originChest.getPos(), // The position of where the sound will come from
                     SoundEvents.UI_TOAST_OUT, // The sound that will play, in this case, the sound the anvil plays when it lands.
                     SoundCategory.BLOCKS, // This determines which of the volume sliders affect this sound
-                    .75f, //Volume multiplier, 1 is normal, 0.5 is half volume, etc
-                    2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+                    chestConfig.soundVolume(), // .75f
+                    chestConfig.soundPitch()  // 2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
             );
             ItemStack ghostStack = new ItemStack(item, 1);
             GhostItemEntity itemEntity = new GhostItemEntity(this.originChest.getWorld(),
@@ -147,18 +191,18 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
         }
     }
 
-
     private static class SlotJob {
+        private final DropboxChestConfig chestConfig;
         private final List<TargetChest> candidateChests;
         private final ItemStack originStack;
 
-
-        private SlotJob(Inventory originChest, int slot, List<TargetChest> candidateChests) {
+        private SlotJob(DropboxChestConfig chestConfig, Inventory originChest, int slot, List<TargetChest> candidateChests) {
+            this.chestConfig = requireNonNull(chestConfig);
             this.candidateChests = requireNonNull(candidateChests);
             this.originStack = originChest.getStack(slot);
         }
 
-        static SlotJob create(LootableContainerBlockEntity originChest, int slot, List<TargetChest> allVisibleChests) {
+        static SlotJob create(DropboxChestConfig chestConfig, LootableContainerBlockEntity originChest, int slot, List<TargetChest> allVisibleChests) {
             final ItemStack originStack = originChest.getStack(slot);
             if (originStack == null || originStack.isEmpty()) return null;
             final List<TargetChest> candidateChests = new ArrayList<>();
@@ -167,7 +211,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     candidateChests.add(visibleChest);
                 }
             }
-            return candidateChests.isEmpty() ? null : new SlotJob(originChest, slot, candidateChests);
+            return candidateChests.isEmpty() ? null : new SlotJob(chestConfig, originChest, slot, candidateChests);
         }
 
         boolean doOneTransfer(GhostCreator gc) {
@@ -225,30 +269,14 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
 
     private final List<ChestJob> jobs = new ArrayList<>();
 
-    private static final int GHOST_TTL = 7;
 
-    @Override
-    public void onEndTick(ServerWorld world) {
-        if (this.jobs.isEmpty()) return;
-        Iterator<ChestJob> i = this.jobs.iterator();
-        while (i.hasNext()) {
-            ChestJob job = i.next();
-            if (job.isDone()) {
-                System.out.println("JOB DONE!");
-                i.remove();
-            } else {
-                job.tick();
-            }
-        }
-    }
-
-    private static record TargetChest(
+    private record TargetChest(
             LootableContainerBlockEntity targetChest,
             Vec3d originPos,
             Vec3d targetPos,
             Vec3d itemVelocity) {}
 
-    private List<TargetChest> getVisibleChestsNear(World world, ChestBlockEntity originChest, int distance) {
+    private List<TargetChest> getVisibleChestsNear(DropboxChestConfig chestConfig, World world, ChestBlockEntity originChest, int distance) {
         final GhostItemEntity itemEntity = new GhostItemEntity(world, 0,0,0, new ItemStack(Blocks.COBBLESTONE));
         System.out.println("looking for chests:");
         List<TargetChest> out = new ArrayList<>();
@@ -257,7 +285,7 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                 for(int f = originChest.getPos().getZ() - distance; f <= originChest.getPos().getZ() + distance; f++) {
                     if (d == originChest.getPos().getX() && e == originChest.getPos().getY() && f == originChest.getPos().getZ()) continue;
                     BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
-                    if (!(bs instanceof LootableContainerBlockEntity targetChest)) continue;
+                    if (!(bs instanceof ChestBlockEntity targetChest)) continue;
 
                     Vec3d origin = getTransferPoint(itemEntity, originChest.getPos(), targetChest.getPos());
                     Vec3d target = getTransferPoint(itemEntity, targetChest.getPos(), originChest.getPos());
@@ -270,9 +298,9 @@ public class DropboxService implements ServerTickEvents.EndWorldTick {
                     if (result.getPos().equals(adjustedTarget)) {
                         System.out.println("VISIBLE! "+result.getBlockPos()+" "+targetChest.getPos());
                         Vec3d itemVelocity = new Vec3d(
-                                (target.getX() - origin.getX()) / (GHOST_TTL),
-                                (target.getY() - origin.getY()) / (GHOST_TTL),
-                                (target.getZ() - origin.getZ()) / (GHOST_TTL));
+                                (target.getX() - origin.getX()) / chestConfig.animationTicks(),
+                                (target.getY() - origin.getY()) / chestConfig.animationTicks(),
+                                (target.getZ() - origin.getZ()) / chestConfig.animationTicks());
                         out.add(new TargetChest(targetChest, origin, target, itemVelocity));
                     } else {
                         System.out.println("NOT VISIBLE "+result.getBlockPos()+" "+targetChest.getPos());

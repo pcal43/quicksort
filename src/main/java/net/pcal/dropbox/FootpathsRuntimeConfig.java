@@ -1,4 +1,4 @@
-package net.pcal.footpaths;
+package net.pcal.dropbox;
 
 import com.google.common.collect.ImmutableSet;
 import net.minecraft.util.Identifier;

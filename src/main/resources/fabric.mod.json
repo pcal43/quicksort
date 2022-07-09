@@ -1,25 +1,25 @@
 {
   "schemaVersion": 1,
-  "id": "footpaths",
+  "id": "dropbox",
   "version": "${version}",
-  "name": "Footpaths",
-  "description": "Vanilla-friendly footpaths",
+  "name": "Dropbox",
+  "description": "Brainless Organization",
   "authors": ["pcal.net"],
 
   "contact": {
-    "homepage": "https://github.com/pcal43/footpaths",
-    "sources": "https://github.com/pcal43/footpaths"
+    "homepage": "https://github.com/pcal43/dropbox",
+    "sources": "https://github.com/pcal43/dropbox"
   },
   "license": "MIT",
   "icon": "",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.pcal.footpaths.FootpathsInitializer"
+      "net.pcal.dropbox.DropboxInitializer"
     ]
   },
   "mixins": [
-    "footpaths.mixins.json"
+    "dropbox.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.11.3",

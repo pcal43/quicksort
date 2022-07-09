@@ -1,12 +1,8 @@
-package net.pcal.footpaths;
+package net.pcal.dropbox;
 
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class GhostItemEntity extends ItemEntity {

@@ -1,10 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.pcal.footpaths.mixins",
+  "package": "net.pcal.dropbox.mixins",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ChestItemPlaced"
+    "ChestBlockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
