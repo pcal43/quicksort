@@ -3,7 +3,7 @@
   "id": "quicksort",
   "version": "${version}",
   "name": "Quicksort",
-  "description": "Brainless Organization",
+  "description": "Low-effort Organization",
   "authors": ["pcal.net"],
 
   "contact": {
@@ -11,7 +11,7 @@
     "sources": "https://github.com/pcal43/quicksort"
   },
   "license": "MIT",
-  "icon": "quicksort-icon.png",
+  "icon": "",
   "environment": "*",
   "entrypoints": {
     "main": [
@@ -24,7 +24,7 @@
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",
-    "minecraft": "1.18.x",
+    "minecraft": "1.19.x",
     "java": ">=17"
   },
   "conflicts": {}
