@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.pcal.quicksort.mixins",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "QuicksortChestMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

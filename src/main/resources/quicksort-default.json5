@@ -1,0 +1,56 @@
+//
+// Quicksort configuration file
+//
+// To customize the mod's behavior, just rename 'quicksort-default.json5' to 'quicksort-custom.json5' and make your
+// edits there.  This will completely override the mod's default behavior with whatever changes you make.
+//
+// YOU MUST RENAME THE FILE IF YOU WANT A CUSTOM CONFIGURATION.  ANY CHANGES YOU MAKE TO THE 'default' FILE WILL
+// GET OVERWRITTEN AT STARTUP.
+//
+// Note that this file isn't parsed with a true json5 parser; it's just preprocessed to strip
+// lines starting with '//'
+//
+
+{
+  // List of configurations for quicksort chest types.  A type is determined by the type of the block underneath
+  // the chest (baseBlockId).
+  //
+  // If more than one quicksortChest is defined, each will take default values from the one that preceded it.
+  //
+  'quicksortChests' : [
+    {
+      // type of the block under the chest
+      'baseBlockId': 'minecraft:diamond_block',
+
+      // range at which target chests will be detected
+      'range': 10,
+
+      // number of ticks between item processing
+      'cooldownTicks': 5,
+
+      // number of ticks it takes the item animation to complete.  set to -1 to disable animation.
+      'animationTicks': 7,
+
+      // volume of sound
+      'soundVolume': 0.75,
+
+      // pitch of sound
+      'soundPitch': 2.0,
+
+      // Sorted items with these ids will also have to have matching nbts.  This means that the enchantments
+      // will have to line up, which is (probably) desirable if you're sorting enchanted books (where you
+      // may want to sort by enchantment) but maybe less so if you're sorting diamond swords (where you probably
+      // want to just dump them all in one chest regardless of enchantment).
+      'nbtMatchEnabledIds': ['minecraft:enchanted_book']
+    },
+    {
+      // type of the block under the chest
+      'baseBlockId': 'minecraft:emerald_block',
+      // range at which target chests will be detected
+      'range': 5,
+    }
+
+  ],
+
+  'logLevel' : 'INFO'
+}
