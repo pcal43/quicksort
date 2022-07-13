@@ -27,7 +27,7 @@ class QuicksortConfigParser {
         final List<QuicksortChestConfig> chests = new ArrayList<>();
         final String rawJson = stripComments(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         final Gson gson = new Gson();
-        final QuicksortConfigGson configGson = gson.fromJson(stripComments(rawJson), QuicksortConfigGson.class);
+        final QuicksortConfigGson configGson = gson.fromJson(rawJson, QuicksortConfigGson.class);
         QuicksortChestConfig dflt = null;
         for (QuicksortChestConfigGson chestGson : configGson.quicksortChests) {
             chests.add(dflt = createWithDefaults(dflt,

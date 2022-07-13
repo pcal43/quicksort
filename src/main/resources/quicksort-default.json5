@@ -47,7 +47,7 @@
       // type of the block under the chest
       'baseBlockId': 'minecraft:emerald_block',
       // range at which target chests will be detected
-      'range': 5,
+      'range': 5
     }
 
   ],
