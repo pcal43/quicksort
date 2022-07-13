@@ -2,13 +2,13 @@
  
 ## Features
 * **Lightweight item sorting.** Keep your workshop organized quickly and easily.
-* **Vanilla-friendly**.         Does NOT add any new blocks to your server.
-* **Serverside-only**.          Does NOT have to be installed on clients.
+* **Vanilla-friendly**.         Does not add any new blocks to your server.
+* **Serverside-only**.          Does not have to be installed on clients.
 * **Fully customizable.**       Define your own quicksort chest types.
 
 ## Usage
 * Place an emerald or diamond block in the center of your storage area.
-* Crete a **Quicksorter** by putting regular chest on top of that block.
+* Create a **Quicksorter** by putting regular chest on top of that block.
 * Items placed in the Quicksorter will automatically be distributed to nearby chests that contain matching items.
 
 ![](https://github.com/pcal43/quicksort/raw/main/etc/quicksort-demo.gif)
@@ -26,7 +26,7 @@
 
 To configure the mod, follow the instructions in the default config file:
 
-https://github.com/pcal43/quicksort/blob/main/src/main/resources/quicksort-default-config.json5
+https://github.com/pcal43/quicksort/blob/main/src/main/resources/quicksort-config.json5
 
 ## Credits
 
