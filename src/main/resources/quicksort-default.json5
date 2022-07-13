@@ -23,7 +23,7 @@
       'baseBlockId': 'minecraft:diamond_block',
 
       // range at which target chests will be detected
-      'range':10,
+      'range': 10,
 
       // number of ticks between item processing
       'cooldownTicks': 5,
