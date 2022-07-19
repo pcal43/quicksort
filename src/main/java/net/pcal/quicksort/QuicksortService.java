@@ -137,7 +137,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     /**
-     * Manages the inflight work for offloading items from a particular quicksorter chest.  There should be at
+     * Manages the offloading of items from a particular quicksorter chest.  There should be at
      * most one of these for each quicksorter chest.
      */
     private static class ChestJob {
