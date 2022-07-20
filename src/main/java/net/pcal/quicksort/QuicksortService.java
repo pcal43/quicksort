@@ -22,7 +22,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import org.apache.logging.log4j.Logger;
@@ -87,9 +86,10 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
     public void onChestClosed(ChestBlockEntity e) {
         final QuicksortChestConfig chestConfig = getChestConfigFor(e);
         if (chestConfig != null) {
-            final List<TargetContainer> visibles = getVisibleChestsNear(e.getWorld(), chestConfig, e, chestConfig.range());
+            final ServerWorld world = requireNonNull((ServerWorld)e.getWorld());
+            final List<TargetContainer> visibles = getVisibleChestsNear(world, chestConfig, e, chestConfig.range());
             if (!visibles.isEmpty()) {
-                final QuicksorterJob job = QuicksorterJob.create(e.getWorld(), chestConfig, e, visibles);
+                final QuicksorterJob job = QuicksorterJob.create(world, chestConfig, e, visibles);
                 if (job != null) jobs.add(job);
             }
         }
@@ -136,7 +136,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
 
     @FunctionalInterface
     interface GhostCreator {
-        void createGhost(World world, Item item, TargetContainer targetContainer);
+        void createGhost(ServerWorld world, Item item, TargetContainer targetContainer);
     }
 
     /**
@@ -152,7 +152,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
         private boolean isTransferComplete = false;
         int tick = 0;
 
-        static QuicksorterJob create(World world, QuicksortChestConfig chestConfig, ChestBlockEntity originChest, List<TargetContainer> visibleTargets) {
+        static QuicksorterJob create(ServerWorld world, QuicksortChestConfig chestConfig, ChestBlockEntity originChest, List<TargetContainer> visibleTargets) {
             final List<SlotJob> slotJobs = new ArrayList<>();
             for (int slot = 0; slot < originChest.size(); slot++) {
                 final SlotJob slotJob = SlotJob.create(world, chestConfig, originChest, slot, visibleTargets);
@@ -172,7 +172,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
             return this.isTransferComplete && this.ghostItems.isEmpty();
         }
 
-        public void tick(World world) {
+        public void tick(ServerWorld world) {
             final Iterator<GhostItemEntity> g = this.ghostItems.iterator();
             while (g.hasNext()) {
                 final GhostItemEntity e = g.next();
@@ -189,7 +189,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
             }
         }
 
-        private boolean doOneTransfer(final World world) {
+        private boolean doOneTransfer(final ServerWorld world) {
             requireNonNull(world);
             SlotJob slotJob;
             do {
@@ -204,7 +204,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
             return false;
         }
 
-        private void createGhost(World world, Item item, TargetContainer targetChest) {
+        private void createGhost(ServerWorld world, Item item, TargetContainer targetChest) {
             world.playSound(
                     null,                            // Player - if non-null, will play sound for every nearby player *except* the specified player
                     this.quicksorterPos,             // The position of where the sound will come from
@@ -241,7 +241,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
         private final List<TargetContainer> targets;
 
 
-        static SlotJob create(World world, QuicksortChestConfig chestConfig, LootableContainerBlockEntity originChest, int slot, List<TargetContainer> allVisibleContainers) {
+        static SlotJob create(ServerWorld world, QuicksortChestConfig chestConfig, LootableContainerBlockEntity originChest, int slot, List<TargetContainer> allVisibleContainers) {
             final ItemStack originStack = originChest.getStack(slot);
             if (originStack == null || originStack.isEmpty()) return null;
             final List<TargetContainer> targetContainers = new ArrayList<>();
@@ -266,7 +266,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
          * Attempt to transfer one item, creating an appropriate GhostEntity.  Return true if successful; if not,
          * false is returned with the expectation that the SlotJob will then be terminated.
          */
-        boolean doOneTransfer(final World world, final GhostCreator gc) {
+        boolean doOneTransfer(final ServerWorld world, final GhostCreator gc) {
             requireNonNull(world, "null gc");
             final Inventory quicksorterInventory = getInventoryFor(world, this.quicksorterPos);
             if (quicksorterInventory == null) {
@@ -308,7 +308,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
          * @return the Inventory at the given block position, or null if there is none.  For double chests, this will
          * return an appropriate DoubleInventory.
          */
-        private static Inventory getInventoryFor(World world, BlockPos blockPos) {
+        private static Inventory getInventoryFor(ServerWorld world, BlockPos blockPos) {
             requireNonNull(world, "null world");
             requireNonNull(blockPos, "null blockPos");
             final BlockEntity entity;
@@ -381,7 +381,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
     ) {
     }
 
-    private List<TargetContainer> getVisibleChestsNear( World world, QuicksortChestConfig chestConfig,ChestBlockEntity originChest, int distance) {
+    private List<TargetContainer> getVisibleChestsNear(ServerWorld world, QuicksortChestConfig chestConfig,ChestBlockEntity originChest, int distance) {
         final GhostItemEntity itemEntity = new GhostItemEntity(world, 0, 0, 0, new ItemStack(Blocks.COBBLESTONE));
         List<TargetContainer> out = new ArrayList<>();
         for (int d = originChest.getPos().getX() - distance; d <= originChest.getPos().getX() + distance; d++) {
