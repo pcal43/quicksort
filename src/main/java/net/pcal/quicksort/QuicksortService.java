@@ -2,7 +2,9 @@ package net.pcal.quicksort;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.ChestBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.HopperBlockEntity;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
+import static net.minecraft.block.ChestBlock.getInventory;
 
 /**
  * Singleton that makes the quicksorter chests do their thing.
@@ -134,7 +137,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     /**
-     * Manages the inflight work for offloaing items from a particular quicksorter chest.  There should be at
+     * Manages the inflight work for offloading items from a particular quicksorter chest.  There should be at
      * most one of these for each quicksorter chest.
      */
     private static class ChestJob {
@@ -223,23 +226,38 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         }
     }
 
+    /**
+     * @return the Inventory for the given container.  This is usually just the container itself except in the case
+     * of a double chest, in which case a DoubleInventory gets synthesized.
+     */
+    private static Inventory getInventoryFor(LootableContainerBlockEntity container) {
+        if (container instanceof ChestBlockEntity) {
+            final World world = requireNonNull(container.getWorld(), "null world?");
+            final BlockState blockState = world.getBlockState(container.getPos());
+            return getInventory((ChestBlock) blockState.getBlock(), blockState, world, container.getPos(), true);
+        } else {
+            return container;
+        }
+    }
+
     private static class SlotJob {
         private final QuicksortChestConfig chestConfig;
         private final List<TargetChest> candidateChests;
         private final ItemStack originStack;
-
 
         static SlotJob create(QuicksortChestConfig chestConfig, LootableContainerBlockEntity originChest, int slot, List<TargetChest> allVisibleChests) {
             final ItemStack originStack = originChest.getStack(slot);
             if (originStack == null || originStack.isEmpty()) return null;
             final List<TargetChest> candidateChests = new ArrayList<>();
             for (TargetChest visibleChest : allVisibleChests) {
-                if (isValidTarget(originStack, visibleChest.targetChest(), chestConfig.nbtMatchEnabledIds())) {
+                final Inventory targetInventory = getInventoryFor(visibleChest.targetChest);
+                if (isValidTarget(originStack, targetInventory, chestConfig.nbtMatchEnabledIds())) {
                     candidateChests.add(visibleChest);
                 }
             }
             return candidateChests.isEmpty() ? null : new SlotJob(chestConfig, originChest, slot, candidateChests);
         }
+
 
         private SlotJob(QuicksortChestConfig chestConfig, Inventory originChest, int slot, List<TargetChest> candidateChests) {
             this.chestConfig = requireNonNull(chestConfig);
@@ -255,7 +273,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 copy.setCount(1);
                 final int candidateIndex = new Random().nextInt(this.candidateChests.size());
                 final TargetChest candidate = this.candidateChests.get(candidateIndex);
-                ItemStack itemStack2 = HopperBlockEntity.transfer((Inventory) null, candidate.targetChest(), copy, (Direction) null);
+                final Inventory targetInventory = getInventoryFor(candidate.targetChest());
+                ItemStack itemStack2 = HopperBlockEntity.transfer((Inventory) null, targetInventory, copy, (Direction) null);
                 if (itemStack2.isEmpty()) {
                     if (this.chestConfig.animationTicks() > 0) gc.createGhost(ghostItem, candidate);
                     this.originStack.decrement(1);
