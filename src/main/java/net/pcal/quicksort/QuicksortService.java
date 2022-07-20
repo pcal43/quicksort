@@ -40,7 +40,7 @@ import static net.minecraft.block.ChestBlock.getInventory;
 /**
  * Singleton that makes the quicksorter chests do their thing.
  */
-public class QuicksortService implements ServerTickEvents.StartWorldTick {
+public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     // ===================================================================================
     // Singleton
@@ -109,7 +109,7 @@ public class QuicksortService implements ServerTickEvents.StartWorldTick {
     // EndWorldTick implementation
 
     @Override
-    public void onStartTick(ServerWorld world) {
+    public void onEndTick(ServerWorld world) {
         if (this.jobs.isEmpty()) return;
         Iterator<QuicksorterJob> i = this.jobs.iterator();
         while (i.hasNext()) {

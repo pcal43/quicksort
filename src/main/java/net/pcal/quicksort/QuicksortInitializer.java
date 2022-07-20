@@ -74,7 +74,7 @@ public class QuicksortInitializer implements ModInitializer {
             logger.info(LOG_PREFIX + "LogLevel set to " + config.logLevel());
         }
         QuicksortService.getInstance().init(config, logger);
-        ServerTickEvents.START_WORLD_TICK.register(QuicksortService.getInstance());
+        ServerTickEvents.END_WORLD_TICK.register(QuicksortService.getInstance());
         logger.info(LOG_PREFIX + "Initialized");
     }
 }
