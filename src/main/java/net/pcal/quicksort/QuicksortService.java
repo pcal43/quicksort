@@ -34,6 +34,9 @@ import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Singleton that makes the quicksorter chests do their thing.
+ */
 public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     // ===================================================================================
@@ -72,8 +75,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     // ===================================================================================
-    // Public methods
-
+    // Public methods called from mixins
 
     /**
      * When a chest is closed, start a new job.  Called from the mixin.
@@ -131,6 +133,10 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         void createGhost(Item item, TargetChest targetChest);
     }
 
+    /**
+     * Manages the inflight work for offloaing items from a particular quicksorter chest.  There should be at
+     * most one of these for each quicksorter chest.
+     */
     private static class ChestJob {
 
         private final QuicksortChestConfig chestConfig;

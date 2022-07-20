@@ -102,10 +102,10 @@ class QuicksortConfigParser {
     public static class QuicksortChestConfigGson {
         String baseBlockId;
         Integer range;
-        int cooldownTicks;
-        int animationTicks;
-        float soundVolume;
-        float soundPitch;
+        Integer cooldownTicks;
+        Integer animationTicks;
+        Float soundVolume;
+        Float soundPitch;
         List<String> nbtMatchEnabledIds;
     }
 }
