@@ -25,11 +25,11 @@
       // range at which target chests will be detected
       'range': 10,
 
-      // number of ticks between item processing
-      'cooldownTicks': 5,
+      // number of ticks between items
+      'cooldownTicks': 3,
 
       // number of ticks it takes the item animation to complete.  set to -1 to disable animation.
-      'animationTicks': 7,
+      'animationTicks': 10,
 
       // volume of sound
       'soundVolume': 0.75,
@@ -46,6 +46,7 @@
     {
       // type of the block under the chest
       'baseBlockId': 'minecraft:emerald_block',
+
       // range at which target chests will be detected
       'range': 5
     }
