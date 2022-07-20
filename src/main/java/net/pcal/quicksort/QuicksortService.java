@@ -278,10 +278,9 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 final ItemStack copy = originStack.copy();
                 final Item ghostItem = copy.getItem();
                 copy.setCount(1);
-                Inventory targetInventory;
                 final int candidateIndex = new Random().nextInt(this.targets.size());
                 final TargetContainer candidate = this.targets.get(candidateIndex);
-                targetInventory = getInventoryFor(world, candidate.blockPos());
+                final Inventory targetInventory = getInventoryFor(world, candidate.blockPos());
                 if (targetInventory == null) {
                     this.targets.remove(candidateIndex); // target has probably been destroyed
                     continue;
