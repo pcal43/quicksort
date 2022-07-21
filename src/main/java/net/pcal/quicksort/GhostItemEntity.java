@@ -15,26 +15,45 @@ public class GhostItemEntity extends ItemEntity {
         super(world, d, e, f, stack);
     }
 
+    /**
+     * This prevents players from being able to pick up the ghost items.
+     */
     @Override
-    protected void checkBlockCollision() {
-    }
+    public void onPlayerCollision(PlayerEntity player) {}
 
-    public void onPlayerCollision(PlayerEntity player) {
-        // never collide with a player
-    }
+    /**
+     * The prevents hoppers from pulling the ghost items.  Also seems to block some advancement-related code.
+     */
+    @Override
+    public boolean isAlive() { return false; }
 
-    public boolean isInsideWall() {
-        return false;
-    }
+    /**
+     * Prevents ghosts from catching fire if they travel through lava (which evidently doesn't block line-of-sight).
+     * There's actually not any harm if they are on fire.  Just seems like the right thing.
+     */
+    @Override
+    public boolean isFireImmune() { return true; }
 
-    public boolean isCollidable() {
-        return false;
-    }
+    /**
+     * I don't think this actually does anything.
+     */
+    @Override
+    protected void checkBlockCollision() {}
 
-    public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) {
-        return true;
-    }
+    /**
+     * I don't think this actually does anything.
+     */
+    public boolean isInsideWall() { return false; }
 
+    /**
+     * I don't think this actually does anything.
+     */
+    public boolean isCollidable() { return false; }
+
+    /**
+     * I don't think this actually does anything.
+     */
+    public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) { return true; }
 }
 
 
