@@ -11,7 +11,7 @@
 * Create a **Quicksorter** by putting regular chest on top of that block.
 * Items placed in the Quicksorter will automatically be distributed to nearby chests that contain matching items.
 
-![](https://github.com/pcal43/quicksort/raw/main/etc/quicksort-demo.gif)
+![](https://github.com/pcal43/quicksort/raw/main/etc/quicksort-demo2.gif)
 
 
 ## Fine Points
