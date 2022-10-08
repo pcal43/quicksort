@@ -26,7 +26,7 @@
 
 To configure the mod, follow the instructions in the default config file:
 
-https://github.com/pcal43/quicksort/blob/main/src/main/resources/quicksort-default.json5
+https://github.com/pcal43/quicksort/blob/main/src/main/resources/quicksort-default-config.json5
 
 ## Credits
 

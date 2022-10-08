@@ -43,6 +43,8 @@
       // want to just dump them all in one chest regardless of enchantment).
       'nbtMatchEnabledIds': ['minecraft:enchanted_book'],
 
+      // Ids of blocks that will be considered valid targets for sorting.  Listed blocks must be block entities
+      // with an inventory.
       'targetContainerIds': ['minecraft:chest']
     },
     {
