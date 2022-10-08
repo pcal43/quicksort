@@ -77,11 +77,11 @@ jar {
 // https://github.com/modrinth/minotaur
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
-	projectId = "d7PCSOkD"
+	projectId = "R7Xsgpzr"
 	versionNumber = project.mod_version
-	versionType = "alpha"
+	versionType = "Release"
 	uploadFile = remapJar
-	changelog = "<p><a href='https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}'>https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}</a></p>"
+	changelog = "<p><a href='https://github.com/pcal43/quicksort/releases/tag/${project.mod_version}'>https://github.com/pcal43/quicksort/releases/tag/${project.mod_version}</a></p>"
 	gameVersions = ["1.19.2"]
 	loaders = ["fabric"]
 	dependencies {
@@ -94,12 +94,11 @@ curseforge {
 	apiKey = System.getenv("CURSEFORGE_TOKEN") ?: 'CURSEFORGE_TOKEN NOT_SET'
 
 	project {
-		id = "576896"
+		id = "641431"
 		releaseType = "release"
-		changelog = "https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}"
+		changelog = "https://github.com/pcal43/quicksort/releases/tag/${project.mod_version}"
 		changelogType = "markdown"
 		mod_version = project.mod_version
-		releaseType = "beta"
 		addGameVersion ((String) project.minecraft_version)
 		addGameVersion "Fabric"
 		mainArtifact(remapJar)
