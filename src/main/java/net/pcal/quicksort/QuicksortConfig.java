@@ -18,7 +18,8 @@ public record QuicksortConfig(
             int animationTicks,
             float soundVolume,
             float soundPitch,
-            Set<Identifier> nbtMatchEnabledIds
+            Set<Identifier> nbtMatchEnabledIds,
+            Set<Identifier> targetContainerIds
     ) {
     }
 }

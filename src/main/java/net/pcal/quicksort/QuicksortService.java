@@ -22,6 +22,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import org.apache.logging.log4j.Logger;
@@ -84,9 +85,9 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
      * When a chest is closed, start a new job.  Called from the mixin.
      */
     public void onChestClosed(ChestBlockEntity e) {
-        final QuicksortChestConfig chestConfig = getChestConfigFor(e);
+        final ServerWorld world = requireNonNull((ServerWorld)e.getWorld());
+        final QuicksortChestConfig chestConfig = getChestConfigFor(world, e.getPos());
         if (chestConfig != null) {
-            final ServerWorld world = requireNonNull((ServerWorld)e.getWorld());
             final List<TargetContainer> visibles = getVisibleChestsNear(world, chestConfig, e, chestConfig.range());
             if (!visibles.isEmpty()) {
                 final QuicksorterJob job = QuicksorterJob.create(world, chestConfig, e, visibles);
@@ -129,7 +130,11 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     // Private stuff
 
     private QuicksortChestConfig getChestConfigFor(ChestBlockEntity chest) {
-        final Block baseBlock = requireNonNull(chest.getWorld()).getBlockState(chest.getPos().down()).getBlock();
+        return getChestConfigFor(chest.getWorld(), chest.getPos());
+    }
+
+    private QuicksortChestConfig getChestConfigFor(World world, BlockPos chestPos) {
+        final Block baseBlock = world.getBlockState(chestPos.down()).getBlock();
         final Identifier baseBlockId = Registry.BLOCK.getId(baseBlock);
         return this.config.get(baseBlockId);
     }
@@ -310,34 +315,18 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private static Inventory getInventoryFor(ServerWorld world, BlockPos blockPos) {
             requireNonNull(world, "null world");
             requireNonNull(blockPos, "null blockPos");
-            final BlockEntity entity;
-            try {
-                entity = world.getBlockEntity(blockPos);
-            } catch(Throwable e) {
-                e.printStackTrace();
-                return null;
-            }
-            final BlockState blockState;
-            try {
-                blockState = world.getBlockState(blockPos);
-            } catch(Throwable e) {
-                e.printStackTrace();
-                return null;
-            }
-            if (entity == null) return null;
-            if (entity instanceof ChestBlockEntity) {
-                final Block block = blockState.getBlock();
-                if (!(block instanceof ChestBlock)) { // this seems pretty unlikely but let's be careful
-                    return (ChestBlockEntity)entity;
-                } else {
+            final BlockEntity entity = world.getBlockEntity(blockPos);
+            if (entity instanceof Inventory inventory) {
+                if (entity instanceof ChestBlockEntity) { // this seems pretty unlikely but let's be careful
+                    final BlockState blockState = world.getBlockState(blockPos);
+                    final Block block = blockState.getBlock();
                     return getInventory((ChestBlock)block, blockState, world, blockPos, true);
+                } else {
+                    return inventory;
                 }
-            } else if (entity instanceof LootableContainerBlockEntity) {
-                return (LootableContainerBlockEntity)entity;
-            } else {
-                return null;
             }
-        }
+            return null;
+         }
 
         /**
          * @return true if the given targetInventory can accept items from the given stack.
@@ -388,23 +377,27 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 for (int f = originChest.getPos().getZ() - distance; f <= originChest.getPos().getZ() + distance; f++) {
                     if (d == originChest.getPos().getX() && e == originChest.getPos().getY() && f == originChest.getPos().getZ())
                         continue;
-                    BlockEntity bs = world.getBlockEntity(new BlockPos(d, e, f));
-                    if (!(bs instanceof ChestBlockEntity targetChest)) continue;
-                    if (getChestConfigFor((ChestBlockEntity) bs) != null)
-                        continue; // don't send to other sorting chests
+                    final BlockPos targetPos = new BlockPos(d, e, f);
+                    final BlockState targetState = world.getBlockState(new BlockPos(d, e, f));
+                    final Block targetBlock = targetState.getBlock();
+                    final Identifier targetId = Registry.BLOCK.getId(targetBlock);
+                    if (!chestConfig.targetContainerIds().contains(targetId)) continue;
+                    if (targetBlock instanceof ChestBlock && getChestConfigFor(world, targetPos) != null) {
+                        continue; // skip other sorting chests
+                    }
 
-                    final Vec3d origin = getTransferPoint(originChest.getPos(), targetChest.getPos());
-                    final Vec3d target = getTransferPoint(targetChest.getPos(), originChest.getPos());
+                    final Vec3d origin = getTransferPoint(originChest.getPos(), targetPos);
+                    final Vec3d target = getTransferPoint(targetPos, originChest.getPos());
 
                     BlockHitResult result = world.raycast(new RaycastContext(origin, target,
                             RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, itemEntity));
                     if (result.getPos().equals(target)) {
-                        this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetChest.getPos());
+                        this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
                         Vec3d itemVelocity = new Vec3d(
                                 (target.getX() - origin.getX()) / chestConfig.animationTicks(),
                                 (target.getY() - origin.getY()) / chestConfig.animationTicks(),
                                 (target.getZ() - origin.getZ()) / chestConfig.animationTicks());
-                        out.add(new TargetContainer(targetChest.getPos(), origin, target, itemVelocity));
+                        out.add(new TargetContainer(targetPos, origin, target, itemVelocity));
                     }
                 }
             }

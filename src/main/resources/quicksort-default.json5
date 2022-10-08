@@ -41,7 +41,9 @@
       // will have to line up, which is (probably) desirable if you're sorting enchanted books (where you
       // may want to sort by enchantment) but maybe less so if you're sorting diamond swords (where you probably
       // want to just dump them all in one chest regardless of enchantment).
-      'nbtMatchEnabledIds': ['minecraft:enchanted_book']
+      'nbtMatchEnabledIds': ['minecraft:enchanted_book'],
+
+      'targetContainerIds': ['minecraft:chest']
     },
     {
       // type of the block under the chest
