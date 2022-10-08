@@ -1,6 +1,7 @@
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT'
-	id 'maven-publish'
+	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id "com.modrinth.minotaur" version "2.+"
+	id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -70,24 +71,45 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.archivesBaseName}"}
 	}
-//	from {
-//		configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
-	//}
 }
 
-// configure the maven publication
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
+
+// https://github.com/modrinth/minotaur
+modrinth {
+	token = System.getenv("MODRINTH_TOKEN")
+	projectId = "d7PCSOkD"
+	versionNumber = project.mod_version
+	versionType = "alpha"
+	uploadFile = remapJar
+	changelog = "<p><a href='https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}'>https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}</a></p>"
+	gameVersions = ["1.19.2"]
+	loaders = ["fabric"]
+	dependencies {
+		required.project "fabric-api"
+	}
+}
+
+
+curseforge {
+	apiKey = System.getenv("CURSEFORGE_TOKEN") ?: 'CURSEFORGE_TOKEN NOT_SET'
+
+	project {
+		id = "576896"
+		releaseType = "release"
+		changelog = "https://github.com/pcal43/highspeed-rail/releases/tag/${project.mod_version}"
+		changelogType = "markdown"
+		mod_version = project.mod_version
+		releaseType = "beta"
+		addGameVersion ((String) project.minecraft_version)
+		addGameVersion "Fabric"
+		mainArtifact(remapJar)
+
+		afterEvaluate {
+			uploadTask.dependsOn("remapJar")
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+	options {
+		forgeGradleIntegration = false
 	}
 }
