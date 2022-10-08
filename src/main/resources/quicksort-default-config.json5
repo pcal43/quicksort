@@ -1,7 +1,7 @@
 //
 // Quicksort configuration file
 //
-// To customize the mod's behavior, just rename 'quicksort-default.json5' to 'quicksort-custom.json5' and make your
+// To customize the mod's behavior, just rename 'quicksort-default-config.json5' to 'quicksort-custom.json5' and make your
 // edits there.  This will completely override the mod's default behavior with whatever changes you make.
 //
 // YOU MUST RENAME THE FILE IF YOU WANT A CUSTOM CONFIGURATION.  ANY CHANGES YOU MAKE TO THE 'default' FILE WILL
@@ -41,7 +41,9 @@
       // will have to line up, which is (probably) desirable if you're sorting enchanted books (where you
       // may want to sort by enchantment) but maybe less so if you're sorting diamond swords (where you probably
       // want to just dump them all in one chest regardless of enchantment).
-      'nbtMatchEnabledIds': ['minecraft:enchanted_book']
+      'nbtMatchEnabledIds': ['minecraft:enchanted_book'],
+
+      'targetContainerIds': ['minecraft:chest']
     },
     {
       // type of the block under the chest

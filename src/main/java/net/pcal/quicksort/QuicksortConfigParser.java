@@ -1,5 +1,3 @@
-
-
 package net.pcal.quicksort;
 
 import com.google.gson.Gson;
@@ -23,21 +21,22 @@ import static java.util.Objects.requireNonNull;
 
 class QuicksortConfigParser {
 
-    static QuicksortConfig parse(final InputStream in) throws IOException {
+    static QuicksortConfig parse(final InputStream in, QuicksortChestConfig defaultChestConfig) throws IOException {
         final List<QuicksortChestConfig> chests = new ArrayList<>();
         final String rawJson = stripComments(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         final Gson gson = new Gson();
+
         final QuicksortConfigGson configGson = gson.fromJson(rawJson, QuicksortConfigGson.class);
-        QuicksortChestConfig dflt = null;
         for (QuicksortChestConfigGson chestGson : configGson.quicksortChests) {
-            chests.add(dflt = createWithDefaults(dflt,
+            chests.add(defaultChestConfig = createWithDefaults(defaultChestConfig,
                     chestGson.baseBlockId,
                     chestGson.range,
                     chestGson.cooldownTicks,
                     chestGson.animationTicks,
                     chestGson.soundVolume,
                     chestGson.soundPitch,
-                    chestGson.nbtMatchEnabledIds));
+                    chestGson.nbtMatchEnabledIds,
+                    chestGson.targetContainerIds));
         }
         // adjust logging to configured level
         final String configuredLevel = configGson.logLevel;
@@ -54,7 +53,8 @@ class QuicksortConfigParser {
             Integer animationTicks,
             Float soundVolume,
             Float soundPitch,
-            Collection<String> nbtMatchEnabledIds) {
+            Collection<String> nbtMatchEnabledIds,
+            Collection<String> targetContainerIds) {
         return new QuicksortChestConfig(
                 new Identifier(requireNonNull(baseBlockId, "baseBlockId is required")),
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
@@ -68,7 +68,9 @@ class QuicksortConfigParser {
                 requireNonNull(soundPitch != null ? soundPitch : dflt == null ? null : dflt.soundPitch(),
                         "soundPitch is required"),
                 requireNonNull(nbtMatchEnabledIds != null ? toIdentifierSet(nbtMatchEnabledIds) : dflt == null ? null : dflt.nbtMatchEnabledIds(),
-                        "nbtMatchEnabledIds")
+                        "nbtMatchEnabledIds"),
+                requireNonNull(targetContainerIds != null ? toIdentifierSet(targetContainerIds) : dflt == null ? null : dflt.targetContainerIds(),
+                        "targetContainerIds")
         );
     }
 
@@ -107,5 +109,6 @@ class QuicksortConfigParser {
         Float soundVolume;
         Float soundPitch;
         List<String> nbtMatchEnabledIds;
+        List<String> targetContainerIds;
     }
 }
