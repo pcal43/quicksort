@@ -24,7 +24,7 @@ public class QuicksortInitializer implements ModInitializer {
     // ===================================================================================
     // Constants
 
-    private static final String DEFAULT_CONFIG_RESOURCE_NAME = "default-config.json5";
+    private static final String DEFAULT_CONFIG_RESOURCE_NAME = "quicksort-default-config.json5";
     private static final String CONFIG_FILENAME = "quicksort.json5";
 
     // files from ill-advised config strategy in odler versions
@@ -57,16 +57,16 @@ public class QuicksortInitializer implements ModInitializer {
         final Path configFilePath = Paths.get("config", CONFIG_FILENAME);
         final QuicksortConfig config;
 
+        File oldDefaultConfigFile = Paths.get("config", OLD_DEFAULT_FILENAME).toFile();
+        if (oldDefaultConfigFile.exists()) {
+            logger.info(LOG_PREFIX + "Deleting old default config file "+oldDefaultConfigFile);
+            oldDefaultConfigFile.delete();
+        }
         if (!configFilePath.toFile().exists()) {
             final Path oldConfigFilename = Paths.get("config",OLD_CONFIG_FILENAME);
             if (oldConfigFilename.toFile().exists()) {
                 logger.info(LOG_PREFIX + "Renaming old configuration file " + oldConfigFilename+ " to " +configFilePath);
                 Files.move(oldConfigFilename, configFilePath);
-                File oldDefaultConfigFile = Paths.get("config", OLD_DEFAULT_FILENAME).toFile();
-                if (oldDefaultConfigFile.exists()) {
-                    logger.info(LOG_PREFIX + "Deleting old default config file "+oldDefaultConfigFile);
-                    oldDefaultConfigFile.delete();
-                }
             } else {
                 logger.info(LOG_PREFIX + "Writing default configuration to " + configFilePath);
                 try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {

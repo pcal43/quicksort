@@ -1,7 +1,7 @@
 //
 // Quicksort configuration file
 //
-// To customize the mod's behavior, just rename 'default-config.json5' to 'quicksort-custom.json5' and make your
+// To customize the mod's behavior, just rename 'quicksort-default-config.json5' to 'quicksort-custom.json5' and make your
 // edits there.  This will completely override the mod's default behavior with whatever changes you make.
 //
 // YOU MUST RENAME THE FILE IF YOU WANT A CUSTOM CONFIGURATION.  ANY CHANGES YOU MAKE TO THE 'default' FILE WILL
