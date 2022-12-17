@@ -40,3 +40,7 @@ https://github.com/pcal43/quicksort/blob/main/src/main/resources/quicksort-defau
 This mod is published under the [MIT License](LICENSE).
 
 You're free to include this mod in your modpack provided you attribute it to pcal.net.
+
+## Discord
+
+https://discord.gg/jUP5nSPrjx

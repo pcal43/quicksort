@@ -12,6 +12,7 @@ import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -20,7 +21,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
@@ -135,7 +135,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     private QuicksortChestConfig getChestConfigFor(World world, BlockPos chestPos) {
         final Block baseBlock = world.getBlockState(chestPos.down()).getBlock();
-        final Identifier baseBlockId = Registry.BLOCK.getId(baseBlock);
+        final Identifier baseBlockId = Registries.BLOCK.getId(baseBlock);
         return this.config.get(baseBlockId);
     }
 
@@ -352,7 +352,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
         private static boolean isMatch(ItemStack first, ItemStack second, Collection<Identifier> nbtMatchEnabledIds) {
             return first.isOf(second.getItem()) &&
-                    (!nbtMatchEnabledIds.contains(Registry.ITEM.getId(first.getItem())) ||
+                    (!nbtMatchEnabledIds.contains(Registries.ITEM.getId(first.getItem())) ||
                             ItemStack.areNbtEqual(first, second));
         }
 
@@ -380,7 +380,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     final BlockPos targetPos = new BlockPos(d, e, f);
                     final BlockState targetState = world.getBlockState(new BlockPos(d, e, f));
                     final Block targetBlock = targetState.getBlock();
-                    final Identifier targetId = Registry.BLOCK.getId(targetBlock);
+                    final Identifier targetId = Registries.BLOCK.getId(targetBlock);
                     if (!chestConfig.targetContainerIds().contains(targetId)) continue;
                     if (targetBlock instanceof ChestBlock && getChestConfigFor(world, targetPos) != null) {
                         continue; // skip other sorting chests
