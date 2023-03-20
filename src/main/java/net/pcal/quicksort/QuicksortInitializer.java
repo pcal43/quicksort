@@ -27,10 +27,6 @@ public class QuicksortInitializer implements ModInitializer {
     private static final String DEFAULT_CONFIG_RESOURCE_NAME = "quicksort-default-config.json5";
     private static final String CONFIG_FILENAME = "quicksort.json5";
 
-    // files from ill-advised config strategy in odler versions
-    private static final String OLD_CONFIG_FILENAME = "quicksort-custom.json5";
-    private static final String OLD_DEFAULT_FILENAME = "quicksort-default.json5";
-
     // ===================================================================================
     // ModInitializer implementation
 
@@ -57,23 +53,12 @@ public class QuicksortInitializer implements ModInitializer {
         final Path configFilePath = Paths.get("config", CONFIG_FILENAME);
         final QuicksortConfig config;
 
-        File oldDefaultConfigFile = Paths.get("config", OLD_DEFAULT_FILENAME).toFile();
-        if (oldDefaultConfigFile.exists()) {
-            logger.info(LOG_PREFIX + "Deleting old default config file "+oldDefaultConfigFile);
-            oldDefaultConfigFile.delete();
-        }
         if (!configFilePath.toFile().exists()) {
-            final Path oldConfigFilename = Paths.get("config",OLD_CONFIG_FILENAME);
-            if (oldConfigFilename.toFile().exists()) {
-                logger.info(LOG_PREFIX + "Renaming old configuration file " + oldConfigFilename+ " to " +configFilePath);
-                Files.move(oldConfigFilename, configFilePath);
-            } else {
-                logger.info(LOG_PREFIX + "Writing default configuration to " + configFilePath);
-                try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
-                    if (in == null) throw new IllegalStateException("Unable to load " + DEFAULT_CONFIG_RESOURCE_NAME);
-                    java.nio.file.Files.createDirectories(configDirPath); // dir doesn't exist on fresh install
-                    java.nio.file.Files.copy(in, configFilePath, StandardCopyOption.REPLACE_EXISTING);
-                }
+            logger.info(LOG_PREFIX + "Writing default configuration to " + configFilePath);
+            try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
+                if (in == null) throw new IllegalStateException("Unable to load " + DEFAULT_CONFIG_RESOURCE_NAME);
+                java.nio.file.Files.createDirectories(configDirPath); // dir doesn't exist on fresh install
+                java.nio.file.Files.copy(in, configFilePath, StandardCopyOption.REPLACE_EXISTING);
             }
         }
         logger.info(LOG_PREFIX + "Loading configuration from " + configFilePath);
