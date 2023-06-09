@@ -353,7 +353,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private static boolean isMatch(ItemStack first, ItemStack second, Collection<Identifier> nbtMatchEnabledIds) {
             return first.isOf(second.getItem()) &&
                     (!nbtMatchEnabledIds.contains(Registries.ITEM.getId(first.getItem())) ||
-                            ItemStack.areNbtEqual(first, second));
+                            ItemStack.areItemsEqual(first, second));
         }
 
         private static boolean isFull(ItemStack stack) {
