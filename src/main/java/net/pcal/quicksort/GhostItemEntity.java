@@ -55,13 +55,10 @@ public class GhostItemEntity extends ItemEntity {
      */
     public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) { return true; }
 
-
-    @Override
-    protected void initDataTracker() {
-        System.out.println("skip tracking!");
-        super.initDataTracker();
-    }
-
+    /**
+     * Don't save the ghosts.  Otherwise, the item is effectively duplicated if the chunk is unloaded while
+     * the ghost is in flight.
+     */
     @Override
     public boolean shouldSave() {
         return false;
