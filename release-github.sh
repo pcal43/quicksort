@@ -11,14 +11,16 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
+RELEASE_BRANCH='maintenance/1.19.4'
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "${CURRENT_BRANCH}" != 'main' ]; then
-  echo "Releases must be performed on main.  Currently on '${CURRENT_BRANCH}'"
+if [ "${CURRENT_BRANCH}" != "${RELEASE_BRANCH}" ]; then
+  echo "Releases must be performed on ${RELEASE_BRANCH}.  Currently on '${CURRENT_BRANCH}'"
   exit 1
 fi
 
 CURRENT_VERSION=$(sed -rn 's/^mod_version.*=[ ]*([^\n]+)$/\1/p' gradle.properties)
 echo "Current version is '$CURRENT_VERSION'"
+
 
 RELEASE_VERSION=$(echo $CURRENT_VERSION | sed s/-prerelease//)
 if [ $CURRENT_VERSION = $RELEASE_VERSION ]; then
