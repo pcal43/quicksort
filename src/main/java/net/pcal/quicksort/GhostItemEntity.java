@@ -54,6 +54,18 @@ public class GhostItemEntity extends ItemEntity {
      * I don't think this actually does anything.
      */
     public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) { return true; }
+
+
+    @Override
+    protected void initDataTracker() {
+        System.out.println("skip tracking!");
+        super.initDataTracker();
+    }
+
+    @Override
+    public boolean shouldSave() {
+        return false;
+    }
 }
 
 
