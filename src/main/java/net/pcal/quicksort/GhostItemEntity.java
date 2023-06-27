@@ -54,6 +54,15 @@ public class GhostItemEntity extends ItemEntity {
      * I don't think this actually does anything.
      */
     public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) { return true; }
+
+    /**
+     * Don't save the ghosts.  Otherwise, the item is effectively duplicated if the chunk is unloaded while
+     * the ghost is in flight.
+     */
+    @Override
+    public boolean shouldSave() {
+        return false;
+    }
 }
 
 
