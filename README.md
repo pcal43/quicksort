@@ -45,6 +45,6 @@ You're free to include this mod in your modpack provided you attribute it to pca
 
 If you have questions about this mod, please join the Discord server:
 
-[http://discord.pcal.net](http://discord.pcal.net)
+[https://discord.pcal.net](https://discord.pcal.net)
 
 Comments have been disabled and I will **not** reply to private messages on Curseforge.
