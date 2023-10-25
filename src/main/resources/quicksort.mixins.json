@@ -4,7 +4,8 @@
   "package": "net.pcal.quicksort.mixins",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "QuicksortChestMixin"
+    "QuicksortChestMixin",
+    "QuicksortHopperMixin"
   ],
   "injectors": {
     "defaultRequire": 1
