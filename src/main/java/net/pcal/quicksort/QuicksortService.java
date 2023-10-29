@@ -19,7 +19,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
@@ -27,13 +26,8 @@ import net.minecraft.world.dimension.DimensionType;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 import static net.minecraft.block.ChestBlock.getInventory;
@@ -240,30 +234,26 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
      * Encapsulates the work to move items out of a specific slot in the quicksorter chest.
      */
     private static class SlotJob {
+        private final ServerWorld world;
         private final QuicksortChestConfig quicksorterConfig;
+        private final LootableContainerBlockEntity originChest;
         private final BlockPos quicksorterPos;
         private final int slot;
-        private final List<TargetContainer> targets;
+        private final List<TargetContainer> allVisibleContainers;
 
-
-        static SlotJob create(ServerWorld world, QuicksortChestConfig chestConfig, LootableContainerBlockEntity originChest, int slot, List<TargetContainer> allVisibleContainers) {
-            final ItemStack originStack = originChest.getStack(slot);
-            if (originStack == null || originStack.isEmpty()) return null;
-            final List<TargetContainer> targetContainers = new ArrayList<>();
-            for (TargetContainer visibleContainer : allVisibleContainers) {
-                final Inventory targetInventory = getInventoryFor(world, visibleContainer.blockPos());
-                if (targetInventory == null) continue;
-                if (isValidTarget(originStack, targetInventory, chestConfig.nbtMatchEnabledIds())) {
-                    targetContainers.add(visibleContainer);
-                }
-            }
-            return targetContainers.isEmpty() ? null : new SlotJob(chestConfig, originChest.getPos(), slot, targetContainers);
+        static SlotJob create(ServerWorld world, QuicksortChestConfig chestConfig,
+                              LootableContainerBlockEntity originChest, int slot,
+                              List<TargetContainer> allVisibleContainers) {
+            return new SlotJob(world, chestConfig, originChest, originChest.getPos(), slot, allVisibleContainers);
         }
 
-        private SlotJob(QuicksortChestConfig chestConfig, BlockPos quicksorterPos, int slot, List<TargetContainer> candidateChests) {
+        private SlotJob(ServerWorld world, QuicksortChestConfig chestConfig, LootableContainerBlockEntity originChest,
+                        BlockPos quicksorterPos, int slot, List<TargetContainer> allVisibleContainers) {
+            this.world = world;
             this.quicksorterConfig = requireNonNull(chestConfig);
+            this.originChest = originChest;
             this.quicksorterPos = requireNonNull(quicksorterPos);
-            this.targets = requireNonNull(candidateChests);
+            this.allVisibleContainers = requireNonNull(allVisibleContainers);
             this.slot = slot;
         }
 
@@ -277,35 +267,66 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             if (quicksorterInventory == null) {
                 return false; // quicksorter presumably was destroyed
             }
-            final ItemStack originStack = quicksorterInventory.getStack(this.slot);
-            if (originStack.isEmpty()) return false;
-            while (!this.targets.isEmpty()) {
+
+            /*
+             * Loop all target candidates and try to transfer the item.
+             * If the item cannot be transferred, because of the target is full, check the next target.
+             */
+            for (final TargetContainer targetContainerCandidate : findTargetContainerCandidates()) {
+                final Inventory targetInventory = getInventoryFor(world, targetContainerCandidate.blockPos());
+                if (targetInventory == null) {
+                    continue;
+                }
+
+                final ItemStack originStack = quicksorterInventory.getStack(this.slot);
+                if (originStack.isEmpty()) {
+                    return false;
+                }
                 final ItemStack copy = originStack.copy();
                 final Item ghostItem = copy.getItem();
                 copy.setCount(1);
-                final int candidateIndex = new Random().nextInt(this.targets.size());
-                final TargetContainer candidate = this.targets.get(candidateIndex);
-                final Inventory targetInventory = getInventoryFor(world, candidate.blockPos());
-                if (targetInventory == null) {
-                    this.targets.remove(candidateIndex); // target has probably been destroyed
+
+                final boolean successfullyTransferred =
+                    HopperBlockEntity.transfer(null, targetInventory, copy, null).isEmpty();
+                if (!successfullyTransferred) {
                     continue;
                 }
-                final ItemStack itemStack2 = HopperBlockEntity.transfer((Inventory) null, targetInventory, copy, (Direction) null);
-                if (!itemStack2.isEmpty()) {
-                    this.targets.remove(candidateIndex); // target is full
-                    continue;
-                }
+
                 // ok, we successfully transferred an item.  the minecraft code doesn't do the bookkeeping
                 // for us on the origin chest, so:
                 originStack.decrement(1);
                 quicksorterInventory.markDirty();
                 if (this.quicksorterConfig.animationTicks() > 0) {
                     // create some animation (after the fact but whatever)
-                    gc.createGhost(world, ghostItem, candidate);
+                    gc.createGhost(world, ghostItem, targetContainerCandidate);
                 }
                 return true;
             }
+
             return false;
+        }
+
+        /**
+         * Find all target container candidates by matching the item types.
+         * @return
+         */
+        private List<TargetContainer> findTargetContainerCandidates() {
+            final List<TargetContainer> candidates = new ArrayList<>();
+            final ItemStack originStack = originChest.getStack(slot);
+            if (originStack == null || originStack.isEmpty()) {
+                return new ArrayList<>();
+            }
+            for (TargetContainer visibleContainer : allVisibleContainers) {
+                final Inventory targetInventory = getInventoryFor(world, visibleContainer.blockPos());
+                if (targetInventory == null) {
+                    continue;
+                }
+                if (isValidTarget(originStack, targetInventory, quicksorterConfig.nbtMatchEnabledIds())) {
+                    candidates.add(visibleContainer);
+                }
+            }
+
+            return candidates;
         }
 
         /**
@@ -334,30 +355,15 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private static boolean isValidTarget(ItemStack originStack, Inventory targetInventory, Collection<Identifier> nbtMatchEnabledIds) {
             requireNonNull(targetInventory, "inventory");
             requireNonNull(originStack, "item");
-            Integer firstEmptySlot = null;
-            boolean hasMatchingItem = false;
-            for (int slot = 0; slot < targetInventory.size(); slot++) {
-                ItemStack targetStack = requireNonNull(targetInventory.getStack(slot));
-                if (targetStack.isEmpty()) {
-                    if (hasMatchingItem) return true; // this one's empty and a match was found earlier. done.
-                    if (firstEmptySlot == null) firstEmptySlot = slot; // else remember this empty slot
-                } else if (isMatch(originStack, targetStack, nbtMatchEnabledIds)) {
-                    if (firstEmptySlot != null) return true;
-                    if (!isFull(targetStack)) return true;
-                    hasMatchingItem = true;
-                }
-            }
-            return false;
+            return IntStream.range(0, targetInventory.size()).boxed()
+                            .anyMatch(integer -> isMatch(originStack, targetInventory.getStack(integer),
+                                nbtMatchEnabledIds));
         }
 
         private static boolean isMatch(ItemStack first, ItemStack second, Collection<Identifier> nbtMatchEnabledIds) {
             return first.isOf(second.getItem()) &&
-                    (!nbtMatchEnabledIds.contains(Registries.ITEM.getId(first.getItem())) ||
-                            areNbtEqual(first, second));
-        }
-
-        private static boolean isFull(ItemStack stack) {
-            return stack.getCount() == stack.getMaxCount();
+                (!nbtMatchEnabledIds.contains(Registries.ITEM.getId(first.getItem())) ||
+                    areNbtEqual(first, second));
         }
 
         private static boolean areNbtEqual(ItemStack left, ItemStack right) {
