@@ -1,9 +1,9 @@
 package net.pcal.quicksort;
 
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /**
  * ItemEntity that tries to disable collision checking.  The only one that really seems to work here
@@ -11,7 +11,7 @@ import net.minecraft.world.World;
  */
 public class GhostItemEntity extends ItemEntity {
 
-    public GhostItemEntity(World world, double d, double e, double f, ItemStack stack) {
+    public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack) {
         super(world, d, e, f, stack);
     }
 
@@ -19,7 +19,7 @@ public class GhostItemEntity extends ItemEntity {
      * This prevents players from being able to pick up the ghost items.
      */
     @Override
-    public void onPlayerCollision(PlayerEntity player) {}
+    public void playerTouch(Player player) {}
 
     /**
      * The prevents hoppers from pulling the ghost items.  Also seems to block some advancement-related code.
@@ -32,35 +32,35 @@ public class GhostItemEntity extends ItemEntity {
      * There's actually not any harm if they are on fire.  Just seems like the right thing.
      */
     @Override
-    public boolean isFireImmune() { return true; }
+    public boolean fireImmune() { return true; }
 
     /**
      * I don't think this actually does anything.
      */
     @Override
-    protected void checkBlockCollision() {}
+    protected void checkInsideBlocks() {}
 
     /**
      * I don't think this actually does anything.
      */
-    public boolean isInsideWall() { return false; }
+    public boolean isInWall() { return false; }
 
     /**
      * I don't think this actually does anything.
      */
-    public boolean isCollidable() { return false; }
+    public boolean canBeCollidedWith() { return false; }
 
     /**
      * I don't think this actually does anything.
      */
-    public boolean doesNotCollide(double offsetX, double offsetY, double offsetZ) { return true; }
+    public boolean isFree(double offsetX, double offsetY, double offsetZ) { return true; }
 
     /**
      * Don't save the ghosts.  Otherwise, the item is effectively duplicated if the chunk is unloaded while
      * the ghost is in flight.
      */
     @Override
-    public boolean shouldSave() {
+    public boolean shouldBeSaved() {
         return false;
     }
 }
