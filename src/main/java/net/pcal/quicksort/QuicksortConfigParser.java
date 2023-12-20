@@ -1,7 +1,7 @@
 package net.pcal.quicksort;
 
 import com.google.gson.Gson;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import org.apache.logging.log4j.Level;
 
@@ -56,7 +56,7 @@ class QuicksortConfigParser {
             Collection<String> nbtMatchEnabledIds,
             Collection<String> targetContainerIds) {
         return new QuicksortChestConfig(
-                new Identifier(requireNonNull(baseBlockId, "baseBlockId is required")),
+                new ResourceLocation(requireNonNull(baseBlockId, "baseBlockId is required")),
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
                         "range is required"),
                 requireNonNull(cooldownTicks != null ? cooldownTicks : dflt == null ? null : dflt.cooldownTicks(),
@@ -74,9 +74,9 @@ class QuicksortConfigParser {
         );
     }
 
-    private static Set<Identifier> toIdentifierSet(Collection<String> nbtMatchEnabledIds) {
-        final Set<Identifier> set = new HashSet<>();
-        for (String id : nbtMatchEnabledIds) set.add(new Identifier(id));
+    private static Set<ResourceLocation> toIdentifierSet(Collection<String> nbtMatchEnabledIds) {
+        final Set<ResourceLocation> set = new HashSet<>();
+        for (String id : nbtMatchEnabledIds) set.add(new ResourceLocation(id));
         return set;
     }
 

@@ -1,10 +1,10 @@
 package net.pcal.quicksort;
 
-import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.Level;
 
 import java.util.List;
 import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
 
 public record QuicksortConfig(
         List<QuicksortChestConfig> chestConfigs,
@@ -12,14 +12,14 @@ public record QuicksortConfig(
 ) {
 
     public record QuicksortChestConfig(
-            Identifier baseBlockId,
+            ResourceLocation baseBlockId,
             int range,
             int cooldownTicks,
             int animationTicks,
             float soundVolume,
             float soundPitch,
-            Set<Identifier> nbtMatchEnabledIds,
-            Set<Identifier> targetContainerIds
+            Set<ResourceLocation> nbtMatchEnabledIds,
+            Set<ResourceLocation> targetContainerIds
     ) {
     }
 }
