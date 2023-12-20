@@ -11,13 +11,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ChestBlockEntity.class)
 public class QuicksortChestMixin {
 
-    @Inject(method = "onClose", at = @At("TAIL"))
+    @Inject(method = "stopOpen", at = @At("TAIL"))
     public void onClose(Player player, CallbackInfo ci) {
         ChestBlockEntity e = (ChestBlockEntity) (Object) this;
         QuicksortService.getInstance().onChestClosed(e);
     }
 
-    @Inject(method = "onOpen", at = @At("TAIL"))
+    @Inject(method = "startOpen", at = @At("TAIL"))
     public void onOpen(Player player, CallbackInfo ci) {
         ChestBlockEntity e = (ChestBlockEntity) (Object) this;
         QuicksortService.getInstance().onChestOpened(e);
