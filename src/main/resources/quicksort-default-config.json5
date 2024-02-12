@@ -17,13 +17,13 @@
       'baseBlockId': 'minecraft:diamond_block',
 
       // range at which target chests will be detected
-      'range': 10,
+      'range': 30,
 
       // number of ticks between items
-      'cooldownTicks': 3,
+      'cooldownTicks': 1,
 
       // number of ticks it takes the item animation to complete.  set to -1 to disable animation.
-      'animationTicks': 10,
+      'animationTicks': 3,
 
       // volume of sound
       'soundVolume': 0.75,
