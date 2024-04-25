@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -364,10 +365,12 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             if (left.isEmpty() && right.isEmpty()) {
                 return true;
             } else if (!left.isEmpty() && !right.isEmpty()) {
-                if (left.getTag() == null && right.getTag() != null) {
+                final TagKey<Item> leftTag = left.getTags().findFirst().orElse(null);
+                final TagKey<Item> rightTag = right.getTags().findFirst().orElse(null);
+                if (leftTag == null && rightTag != null) {
                     return false;
                 } else {
-                    return left.getTag() == null || left.getTag().equals(right.getTag());
+                    return leftTag == null || leftTag.equals(rightTag);
                 }
             } else {
                 return false;
