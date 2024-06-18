@@ -56,7 +56,7 @@ class QuicksortConfigParser {
             Collection<String> nbtMatchEnabledIds,
             Collection<String> targetContainerIds) {
         return new QuicksortChestConfig(
-                new ResourceLocation(requireNonNull(baseBlockId, "baseBlockId is required")),
+                ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
                         "range is required"),
                 requireNonNull(cooldownTicks != null ? cooldownTicks : dflt == null ? null : dflt.cooldownTicks(),
@@ -76,7 +76,7 @@ class QuicksortConfigParser {
 
     private static Set<ResourceLocation> toIdentifierSet(Collection<String> nbtMatchEnabledIds) {
         final Set<ResourceLocation> set = new HashSet<>();
-        for (String id : nbtMatchEnabledIds) set.add(new ResourceLocation(id));
+        for (String id : nbtMatchEnabledIds) set.add(ResourceLocation.parse(id));
         return set;
     }
 
