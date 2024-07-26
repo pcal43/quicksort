@@ -18,6 +18,18 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
 	maven { url 'https://maven.nucleoid.xyz' }
+	// https://docs.modrinth.com/docs/tutorials/maven/#advanced-repository-declaration-recommended
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 
@@ -32,6 +44,9 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// ExpandedStorage Compat
+	modImplementation "maven.modrinth:expanded-storage:${project.expanded_storage_version}"
 
 	// JUnit
 	testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
