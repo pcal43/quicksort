@@ -20,13 +20,13 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import net.pcal.quicksort.api.events.ContainerBlockEvents;
-
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -71,11 +71,9 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     // Package methods
 
     void init(QuicksortConfig config, Logger logger) {
-        if (this.logger != null)
-            throw new IllegalStateException();
+        if (this.logger != null) throw new IllegalStateException();
         this.logger = requireNonNull(logger);
-        if (this.config != null)
-            throw new IllegalStateException();
+        if (this.config != null) throw new IllegalStateException();
         this.config = new HashMap<>();
         for (final QuicksortChestConfig chest : config.chestConfigs()) {
             this.config.put(chest.baseBlockId(), chest);
@@ -83,23 +81,23 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
         // When a chest is opened, we stop any jobs running on it
         // (there really should be at most one).
-        ContainerBlockEvents.CONTAINER_OPENED.register((world, player, container, blockEntity) -> {
+        ContainerBlockEvents.CONTAINER_OPENED.register((player, container) -> {
             for (final var job : this.jobs) {
-                if (job.quicksorterPos.equals(blockEntity.getBlockPos())) {
+                if (job.quicksorterPos.equals(container.getBlockPos())) {
                     job.stop();
                 }
             }
         });
 
         // When a chest is closed, start a new job. Called from the mixin.
-        ContainerBlockEvents.CONTAINER_CLOSED.register((world, player, container, blockEntity) -> {
-            final var blockPos = blockEntity.getBlockPos();
-            final var chestConfig = getChestConfigFor(world, blockPos);
+        ContainerBlockEvents.CONTAINER_CLOSED.register((player, container) -> {
+            final var blockPos = container.getBlockPos();
+            final var chestConfig = getChestConfigFor(container.getWorld(), container.getBlockPos());
 
             if (chestConfig != null) {
-                final var visibles = getVisibleChestsNear(world, chestConfig, blockPos, chestConfig.range());
+                final var visibles = getVisibleChestsNear(container.getWorld(), chestConfig, blockPos, chestConfig.range());
                 if (!visibles.isEmpty()) {
-                    final var job = QuicksorterJob.create(world, chestConfig, container, blockPos, visibles);
+                    final var job = QuicksorterJob.create(chestConfig, container, visibles);
                     if (job != null)
                         jobs.add(job);
                 }
@@ -112,8 +110,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     @Override
     public void onEndTick(ServerLevel world) {
-        if (this.jobs.isEmpty())
-            return;
+        if (this.jobs.isEmpty()) return;
         Iterator<QuicksorterJob> i = this.jobs.iterator();
         while (i.hasNext()) {
             final QuicksorterJob job = i.next();
@@ -147,8 +144,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     /**
-     * Manages the offloading of items from a particular quicksorter chest. There
-     * should be at
+     * Manages the offloading of items from a particular quicksorter chest.  There should be at
      * most one of these for each quicksorter chest.
      */
     private static class QuicksorterJob {
@@ -160,22 +156,16 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private boolean isTransferComplete = false;
         int tick = 0;
 
-        static QuicksorterJob create(ServerLevel world, QuicksortChestConfig chestConfig, Container originChest,
-                BlockPos originCheckBlockPos,
-                List<TargetContainer> visibleTargets) {
+        static QuicksorterJob create(QuicksortChestConfig chestConfig, QuicksortingContainer container, List<TargetContainer> visibleTargets) {
             final List<SlotJob> slotJobs = new ArrayList<>();
-            for (int slot = 0; slot < originChest.getContainerSize(); slot++) {
-                final SlotJob slotJob = SlotJob.create(world, chestConfig, originChest, originCheckBlockPos, slot,
-                        visibleTargets);
-                if (slotJob != null)
-                    slotJobs.add(slotJob);
+            for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                final SlotJob slotJob = SlotJob.create(chestConfig, container, slot, visibleTargets);
+                if (slotJob != null) slotJobs.add(slotJob);
             }
-            return slotJobs.isEmpty() ? null
-                    : new QuicksorterJob(chestConfig, world.dimensionType(), originCheckBlockPos, slotJobs);
+            return slotJobs.isEmpty() ? null : new QuicksorterJob(chestConfig, container.getWorld().dimensionType(), container.getBlockPos(), slotJobs);
         }
 
-        QuicksorterJob(QuicksortChestConfig chestConfig, DimensionType dimension, BlockPos quicksorterPos,
-                List<SlotJob> slotJobs) {
+        QuicksorterJob(QuicksortChestConfig chestConfig, DimensionType dimension, BlockPos quicksorterPos, List<SlotJob> slotJobs) {
             this.quicksorterConfig = requireNonNull(chestConfig);
             this.dimension = requireNonNull(dimension);
             this.quicksorterPos = requireNonNull(quicksorterPos);
@@ -198,8 +188,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             if (!this.isTransferComplete) {
                 if (tick++ > this.quicksorterConfig.cooldownTicks()) {
                     tick = 0;
-                    if (!doOneTransfer(world))
-                        this.isTransferComplete = true;
+                    if (!doOneTransfer(world)) this.isTransferComplete = true;
                 }
             }
         }
@@ -221,19 +210,16 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
         private void createGhost(ServerLevel world, Item item, TargetContainer targetChest) {
             world.playSound(
-                    null, // Player - if non-null, will play sound for every nearby player *except* the
-                          // specified player
-                    this.quicksorterPos, // The position of where the sound will come from
-                    SoundEvents.UI_TOAST_OUT, // The sound that will play, in this case, the sound the anvil plays when
-                                              // it lands.
-                    SoundSource.BLOCKS, // This determines which of the volume sliders affect this sound
+                    null,                            // Player - if non-null, will play sound for every nearby player *except* the specified player
+                    this.quicksorterPos,             // The position of where the sound will come from
+                    SoundEvents.UI_TOAST_OUT,        // The sound that will play, in this case, the sound the anvil plays when it lands.
+                    SoundSource.BLOCKS,              // This determines which of the volume sliders affect this sound
                     quicksorterConfig.soundVolume(), // .75f
-                    quicksorterConfig.soundPitch() // 2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
+                    quicksorterConfig.soundPitch()   // 2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
             );
             ItemStack ghostStack = new ItemStack(item, 1);
             GhostItemEntity itemEntity = new GhostItemEntity(world,
-                    targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(),
-                    ghostStack);
+                    targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(), ghostStack);
             this.ghostItems.add(itemEntity);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
@@ -248,9 +234,9 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         }
     }
 
+
     /**
-     * Encapsulates the work to move items out of a specific slot in the quicksorter
-     * chest.
+     * Encapsulates the work to move items out of a specific slot in the quicksorter chest.
      */
     private static class SlotJob {
         private final QuicksortChestConfig quicksorterConfig;
@@ -258,26 +244,22 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private final int slot;
         private final List<TargetContainer> targets;
 
-        static SlotJob create(ServerLevel world, QuicksortChestConfig chestConfig, Container originChest,
-                BlockPos originChestBlockPos, int slot, List<TargetContainer> allVisibleContainers) {
-            final ItemStack originStack = originChest.getItem(slot);
-            if (originStack == null || originStack.isEmpty())
-                return null;
+
+        static SlotJob create(QuicksortChestConfig chestConfig, QuicksortingContainer originChest, int slot, List<TargetContainer> allVisibleContainers) {
+            final ItemStack originStack = originChest.getItemStack(slot);
+            if (originStack == null || originStack.isEmpty()) return null;
             final List<TargetContainer> targetContainers = new ArrayList<>();
             for (TargetContainer visibleContainer : allVisibleContainers) {
-                final Container targetInventory = getInventoryFor(world, visibleContainer.blockPos());
-                if (targetInventory == null)
-                    continue;
+                final Container targetInventory = getInventoryFor(originChest.getWorld(), visibleContainer.blockPos());
+                if (targetInventory == null) continue;
                 if (isValidTarget(originStack, targetInventory, chestConfig.nbtMatchEnabledIds())) {
                     targetContainers.add(visibleContainer);
                 }
             }
-            return targetContainers.isEmpty() ? null
-                    : new SlotJob(chestConfig, originChestBlockPos, slot, targetContainers);
+            return targetContainers.isEmpty() ? null : new SlotJob(chestConfig, originChest.getBlockPos(), slot, targetContainers);
         }
 
-        private SlotJob(QuicksortChestConfig chestConfig, BlockPos quicksorterPos, int slot,
-                List<TargetContainer> candidateChests) {
+        private SlotJob(QuicksortChestConfig chestConfig, BlockPos quicksorterPos, int slot, List<TargetContainer> candidateChests) {
             this.quicksorterConfig = requireNonNull(chestConfig);
             this.quicksorterPos = requireNonNull(quicksorterPos);
             this.targets = requireNonNull(candidateChests);
@@ -285,10 +267,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         }
 
         /**
-         * Attempt to transfer one item, creating an appropriate GhostEntity. Return
-         * true if successful; if not,
-         * false is returned with the expectation that the SlotJob will then be
-         * terminated.
+         * Attempt to transfer one item, creating an appropriate GhostEntity.  Return true if successful; if not,
+         * false is returned with the expectation that the SlotJob will then be terminated.
          */
         boolean doOneTransfer(final ServerLevel world, final GhostCreator gc) {
             requireNonNull(world, "null gc");
@@ -297,8 +277,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 return false; // quicksorter presumably was destroyed
             }
             final ItemStack originStack = quicksorterInventory.getItem(this.slot);
-            if (originStack.isEmpty())
-                return false;
+            if (originStack.isEmpty()) return false;
             while (!this.targets.isEmpty()) {
                 final ItemStack copy = originStack.copy();
                 final Item ghostItem = copy.getItem();
@@ -310,14 +289,12 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     this.targets.remove(candidateIndex); // target has probably been destroyed
                     continue;
                 }
-                final ItemStack itemStack2 = HopperBlockEntity.addItem((Container) null, targetInventory, copy,
-                        (Direction) null);
+                final ItemStack itemStack2 = HopperBlockEntity.addItem((Container) null, targetInventory, copy, (Direction) null);
                 if (!itemStack2.isEmpty()) {
                     this.targets.remove(candidateIndex); // target is full
                     continue;
                 }
-                // ok, we successfully transferred an item. the minecraft code doesn't do the
-                // bookkeeping
+                // ok, we successfully transferred an item.  the minecraft code doesn't do the bookkeeping
                 // for us on the origin chest, so:
                 originStack.shrink(1);
                 quicksorterInventory.setChanged();
@@ -331,9 +308,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         }
 
         /**
-         * @return the Inventory at the given block position, or null if there is none.
-         *         For double chests, this will
-         *         return an appropriate DoubleInventory.
+         * @return the Inventory at the given block position, or null if there is none.  For double chests, this will
+         * return an appropriate DoubleInventory.
          */
         private static Container getInventoryFor(ServerLevel world, BlockPos blockPos) {
             requireNonNull(world, "null world");
@@ -343,20 +319,18 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 if (entity instanceof ChestBlockEntity) { // this seems pretty unlikely but let's be careful
                     final BlockState blockState = world.getBlockState(blockPos);
                     final Block block = blockState.getBlock();
-                    return getContainer((ChestBlock) block, blockState, world, blockPos, true);
+                    return getContainer((ChestBlock)block, blockState, world, blockPos, true);
                 } else {
                     return inventory;
                 }
             }
             return null;
-        }
+         }
 
         /**
-         * @return true if the given targetInventory can accept items from the given
-         *         stack.
+         * @return true if the given targetInventory can accept items from the given stack.
          */
-        private static boolean isValidTarget(ItemStack originStack, Container targetInventory,
-                Collection<ResourceLocation> nbtMatchEnabledIds) {
+        private static boolean isValidTarget(ItemStack originStack, Container targetInventory, Collection<ResourceLocation> nbtMatchEnabledIds) {
             requireNonNull(targetInventory, "inventory");
             requireNonNull(originStack, "item");
             Integer firstEmptySlot = null;
@@ -364,23 +338,18 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             for (int slot = 0; slot < targetInventory.getContainerSize(); slot++) {
                 ItemStack targetStack = requireNonNull(targetInventory.getItem(slot));
                 if (targetStack.isEmpty()) {
-                    if (hasMatchingItem)
-                        return true; // this one's empty and a match was found earlier. done.
-                    if (firstEmptySlot == null)
-                        firstEmptySlot = slot; // else remember this empty slot
+                    if (hasMatchingItem) return true; // this one's empty and a match was found earlier. done.
+                    if (firstEmptySlot == null) firstEmptySlot = slot; // else remember this empty slot
                 } else if (isMatch(originStack, targetStack, nbtMatchEnabledIds)) {
-                    if (firstEmptySlot != null)
-                        return true;
-                    if (!isFull(targetStack))
-                        return true;
+                    if (firstEmptySlot != null) return true;
+                    if (!isFull(targetStack)) return true;
                     hasMatchingItem = true;
                 }
             }
             return false;
         }
 
-        private static boolean isMatch(ItemStack first, ItemStack second,
-                Collection<ResourceLocation> nbtMatchEnabledIds) {
+        private static boolean isMatch(ItemStack first, ItemStack second, Collection<ResourceLocation> nbtMatchEnabledIds) {
             return first.is(second.getItem()) &&
                     (!nbtMatchEnabledIds.contains(BuiltInRegistries.ITEM.getKey(first.getItem())) ||
                             areNbtEqual(first, second));
@@ -408,10 +377,10 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     private record TargetContainer(
-            BlockPos blockPos, // position of the container
-            Vec3 originItemPos, // coordinates where the GhostItem should appear outside the origin container
-            Vec3 targetItemPos, // coordinates the GhostItem should travel to outside the target container
-            Vec3 itemVelocity // how fast the GhostItem should travel
+            BlockPos blockPos,     // position of the container
+            Vec3 originItemPos,   // coordinates where the GhostItem should appear outside the origin container
+            Vec3 targetItemPos,   // coordinates the GhostItem should travel to outside the target container
+            Vec3 itemVelocity     // how fast the GhostItem should travel
     ) {
     }
 
@@ -444,8 +413,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     BlockHitResult result = world.clip(new ClipContext(origin, target,
                             ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
                     if (result.getLocation().equals(target)) {
-                        this.logger.debug(
-                                () -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
+                        this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
                         Vec3 itemVelocity = new Vec3(
                                 (target.x() - origin.x()) / chestConfig.animationTicks(),
                                 (target.y() - origin.y()) / chestConfig.animationTicks(),

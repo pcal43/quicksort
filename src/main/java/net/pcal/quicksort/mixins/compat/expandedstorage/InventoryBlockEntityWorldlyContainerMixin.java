@@ -2,6 +2,7 @@ package net.pcal.quicksort.mixins.compat.expandedstorage;
 
 import static java.util.Objects.requireNonNull;
 
+import net.pcal.quicksort.QuicksortingContainer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,31 +19,28 @@ import net.pcal.quicksort.api.events.ContainerBlockEvents;
  * {@link InventoryBlockEntity} which is a
  * {@link WorldlyContainer} named `inventory`.
  */
+@SuppressWarnings("ReferenceToMixin")
 @Mixin(targets = "compasses.expandedstorage.impl.block.entity.extendable.InventoryBlockEntity$1")
 public class InventoryBlockEntityWorldlyContainerMixin {
     @Inject(method = "startOpen", at = @At("HEAD"), remap = false)
     private void onStartOpen(Player player, CallbackInfo ci) {
-        final var accessor = (InventoryBlockEntityInnerAccessor) this;
-        final var inventoryBlockEntity = accessor.getOuter();
-        final var world = requireNonNull((ServerLevel) player.level());
-
+        final InventoryBlockEntityInnerAccessor accessor = (InventoryBlockEntityInnerAccessor) this;
+        final InventoryBlockEntity inventoryBlockEntity = accessor.getOuter();
         ContainerBlockEvents.CONTAINER_OPENED.invoker().onContainerOpened(
-                world,
-                player,
-                inventoryBlockEntity.getInventory(),
-                inventoryBlockEntity);
+                player, QuicksortingContainer.of(
+                        requireNonNull((ServerLevel) player.level()),
+                        inventoryBlockEntity.getBlockPos(),
+                        inventoryBlockEntity.getInventory()));
     }
 
     @Inject(method = "stopOpen", at = @At("HEAD"), remap = false)
     private void onStopOpen(Player player, CallbackInfo ci) {
-        final var accessor = (InventoryBlockEntityInnerAccessor) this;
-        final var inventoryBlockEntity = accessor.getOuter();
-        final var world = requireNonNull((ServerLevel) player.level());
-
+        final InventoryBlockEntityInnerAccessor accessor = (InventoryBlockEntityInnerAccessor) this;
+        final InventoryBlockEntity inventoryBlockEntity = accessor.getOuter();
         ContainerBlockEvents.CONTAINER_CLOSED.invoker().onContainerClosed(
-                world,
-                player,
-                inventoryBlockEntity.getInventory(),
-                inventoryBlockEntity);
+                player, QuicksortingContainer.of(
+                        requireNonNull((ServerLevel) player.level()),
+                        inventoryBlockEntity.getBlockPos(),
+                        inventoryBlockEntity.getInventory()));
     }
 }
