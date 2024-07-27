@@ -27,7 +27,7 @@ public class InventoryBlockEntityWorldlyContainerMixin {
         final InventoryBlockEntityInnerAccessor accessor = (InventoryBlockEntityInnerAccessor) this;
         final InventoryBlockEntity inventoryBlockEntity = accessor.getOuter();
         ContainerBlockEvents.CONTAINER_OPENED.invoker().onContainerOpened(
-                player, QuicksortingContainer.of(
+                QuicksortingContainer.of(
                         requireNonNull((ServerLevel) player.level()),
                         inventoryBlockEntity.getBlockPos(),
                         inventoryBlockEntity.getInventory()));
@@ -38,7 +38,7 @@ public class InventoryBlockEntityWorldlyContainerMixin {
         final InventoryBlockEntityInnerAccessor accessor = (InventoryBlockEntityInnerAccessor) this;
         final InventoryBlockEntity inventoryBlockEntity = accessor.getOuter();
         ContainerBlockEvents.CONTAINER_CLOSED.invoker().onContainerClosed(
-                player, QuicksortingContainer.of(
+                QuicksortingContainer.of(
                         requireNonNull((ServerLevel) player.level()),
                         inventoryBlockEntity.getBlockPos(),
                         inventoryBlockEntity.getInventory()));

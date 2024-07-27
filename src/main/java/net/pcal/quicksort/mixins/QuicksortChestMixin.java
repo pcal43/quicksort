@@ -20,7 +20,7 @@ public class QuicksortChestMixin {
     public void onClose(Player player, CallbackInfo ci) {
         final ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
         final ServerLevel world = requireNonNull((ServerLevel) chest.getLevel());
-        ContainerBlockEvents.CONTAINER_CLOSED.invoker().onContainerClosed(player,
+        ContainerBlockEvents.CONTAINER_CLOSED.invoker().onContainerClosed(
                 QuicksortingContainer.of(world, chest.getBlockPos(), chest));
     }
 
@@ -28,7 +28,7 @@ public class QuicksortChestMixin {
     public void onOpen(Player player, CallbackInfo ci) {
         final ChestBlockEntity chest = (ChestBlockEntity) (Object) this;
         final ServerLevel world = requireNonNull((ServerLevel) chest.getLevel());
-        ContainerBlockEvents.CONTAINER_OPENED.invoker().onContainerOpened(player,
+        ContainerBlockEvents.CONTAINER_OPENED.invoker().onContainerOpened(
                 QuicksortingContainer.of(world, chest.getBlockPos(), chest));
     }
 }

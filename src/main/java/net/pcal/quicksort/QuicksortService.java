@@ -80,7 +80,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
         // When a chest is opened, we stop any jobs running on it
         // (there really should be at most one).
-        ContainerBlockEvents.CONTAINER_OPENED.register((playerKILLME, container) -> {
+        ContainerBlockEvents.CONTAINER_OPENED.register((container) -> {
             for (final QuicksorterJob job : this.jobs) {
                 if (job.quicksorterPos.equals(container.getBlockPos())) {
                     job.stop();
@@ -89,7 +89,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         });
 
         // When a chest is closed, start a new job. Called from the mixin.
-        ContainerBlockEvents.CONTAINER_CLOSED.register((playerKILLME, container) -> {
+        ContainerBlockEvents.CONTAINER_CLOSED.register((container) -> {
             final BlockPos blockPos = container.getBlockPos();
             final QuicksortChestConfig chestConfig = getChestConfigFor(container.getWorld(), container.getBlockPos());
             if (chestConfig != null) {
