@@ -39,7 +39,21 @@
 
       // Ids of blocks that will be considered valid targets for sorting.  Listed blocks must be block entities
       // with an inventory.
-      'targetContainerIds': ['minecraft:chest']
+      'targetContainerIds': [
+        'minecraft:chest',
+        'expandedstorage:wood_chest',
+        'expandedstorage:old_wood_chest',
+        'expandedstorage:iron_chest',
+        'expandedstorage:old_iron_chest',
+        'expandedstorage:gold_chest',
+        'expandedstorage:old_gold_chest',
+        'expandedstorage:diamond_chest',
+        'expandedstorage:old_diamond_chest',
+        'expandedstorage:obsidian_chest',
+        'expandedstorage:old_obsidian_chest',
+        'expandedstorage:netherite_chest',
+        'expandedstorage:old_netherite_chest'
+      ]
     },
     {
       // type of the block under the chest
