@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -81,8 +80,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
         // When a chest is opened, we stop any jobs running on it
         // (there really should be at most one).
-        ContainerBlockEvents.CONTAINER_OPENED.register((player, container) -> {
-            for (final var job : this.jobs) {
+        ContainerBlockEvents.CONTAINER_OPENED.register((playerKILLME, container) -> {
+            for (final QuicksorterJob job : this.jobs) {
                 if (job.quicksorterPos.equals(container.getBlockPos())) {
                     job.stop();
                 }
@@ -90,14 +89,13 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         });
 
         // When a chest is closed, start a new job. Called from the mixin.
-        ContainerBlockEvents.CONTAINER_CLOSED.register((player, container) -> {
-            final var blockPos = container.getBlockPos();
-            final var chestConfig = getChestConfigFor(container.getWorld(), container.getBlockPos());
-
+        ContainerBlockEvents.CONTAINER_CLOSED.register((playerKILLME, container) -> {
+            final BlockPos blockPos = container.getBlockPos();
+            final QuicksortChestConfig chestConfig = getChestConfigFor(container.getWorld(), container.getBlockPos());
             if (chestConfig != null) {
-                final var visibles = getVisibleChestsNear(container.getWorld(), chestConfig, blockPos, chestConfig.range());
+                final List<TargetContainer> visibles = getVisibleChestsNear(container.getWorld(), chestConfig, blockPos, chestConfig.range());
                 if (!visibles.isEmpty()) {
-                    final var job = QuicksorterJob.create(chestConfig, container, visibles);
+                    final QuicksorterJob job = QuicksorterJob.create(chestConfig, container, visibles);
                     if (job != null)
                         jobs.add(job);
                 }
@@ -127,10 +125,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     // ===================================================================================
     // Private stuff
-
-    private QuicksortChestConfig getChestConfigFor(ChestBlockEntity chest) {
-        return getChestConfigFor(chest.getLevel(), chest.getBlockPos());
-    }
 
     private QuicksortChestConfig getChestConfigFor(Level world, BlockPos chestPos) {
         final Block baseBlock = world.getBlockState(chestPos.below()).getBlock();
