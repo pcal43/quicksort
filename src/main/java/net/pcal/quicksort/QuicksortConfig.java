@@ -21,6 +21,7 @@ public record QuicksortConfig(
             Set<ResourceLocation> nbtMatchEnabledIds,
             Set<ResourceLocation> targetContainerIds
     ) {
+
     }
 }
 

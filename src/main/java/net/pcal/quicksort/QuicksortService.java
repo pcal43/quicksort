@@ -238,7 +238,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         private final int slot;
         private final List<TargetContainer> targets;
 
-
         static SlotJob create(QuicksortChestConfig chestConfig, QuicksortingContainer originChest, int slot, List<TargetContainer> allVisibleContainers) {
             final ItemStack originStack = originChest.getItemStack(slot);
             if (originStack == null || originStack.isEmpty()) return null;
@@ -288,12 +287,13 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     this.targets.remove(candidateIndex); // target is full
                     continue;
                 }
-                // ok, we successfully transferred an item.  the minecraft code doesn't do the bookkeeping
+                // Ok, we successfully transferred an item.  The minecraft code doesn't do the bookkeeping
                 // for us on the origin chest, so:
                 originStack.shrink(1);
                 quicksorterInventory.setChanged();
                 if (this.quicksorterConfig.animationTicks() > 0) {
-                    // create some animation (after the fact but whatever)
+                    // Create a ghost entity to animate the transfer.  Note that the transfer has already completed
+                    // before animation starts; no one's going to notice.
                     gc.createGhost(world, ghostItem, candidate);
                 }
                 return true;
@@ -371,7 +371,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     private record TargetContainer(
-            BlockPos blockPos,     // position of the container
+            BlockPos blockPos,    // position of the container
             Vec3 originItemPos,   // coordinates where the GhostItem should appear outside the origin container
             Vec3 targetItemPos,   // coordinates the GhostItem should travel to outside the target container
             Vec3 itemVelocity     // how fast the GhostItem should travel
@@ -379,17 +379,17 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     private List<TargetContainer> getVisibleChestsNear(ServerLevel world, QuicksortChestConfig chestConfig,
-            BlockPos originChestBlockPos, int distance) {
+            BlockPos originPos, int distance) {
         final GhostItemEntity itemEntity = new GhostItemEntity(world, 0, 0, 0, new ItemStack(Blocks.COBBLESTONE));
         List<TargetContainer> out = new ArrayList<>();
-        for (int d = originChestBlockPos.getX() - distance; d <= originChestBlockPos.getX()
+        for (int d = originPos.getX() - distance; d <= originPos.getX()
                 + distance; d++) {
-            for (int e = originChestBlockPos.getY() - distance; e <= originChestBlockPos.getY()
+            for (int e = originPos.getY() - distance; e <= originPos.getY()
                     + distance; e++) {
-                for (int f = originChestBlockPos.getZ() - distance; f <= originChestBlockPos.getZ()
+                for (int f = originPos.getZ() - distance; f <= originPos.getZ()
                         + distance; f++) {
-                    if (d == originChestBlockPos.getX() && e == originChestBlockPos.getY()
-                            && f == originChestBlockPos.getZ())
+                    if (d == originPos.getX() && e == originPos.getY()
+                            && f == originPos.getZ())
                         continue;
                     final BlockPos targetPos = new BlockPos(d, e, f);
                     final BlockState targetState = world.getBlockState(new BlockPos(d, e, f));
@@ -401,8 +401,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                         continue; // skip other sorting chests
                     }
 
-                    final Vec3 origin = getTransferPoint(originChestBlockPos, targetPos);
-                    final Vec3 target = getTransferPoint(targetPos, originChestBlockPos);
+                    final Vec3 origin = getTransferPoint(originPos, targetPos);
+                    final Vec3 target = getTransferPoint(targetPos, originPos);
 
                     BlockHitResult result = world.clip(new ClipContext(origin, target,
                             ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
