@@ -14,7 +14,7 @@ public class GhostItemEntity extends ItemEntity {
     public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack) {
         super(world, d, e, f, stack);
     }
-asdf
+
     /**
      * This prevents players from being able to pick up the ghost items.
      */
@@ -22,7 +22,7 @@ asdf
     public void playerTouch(Player player) {}
 
     /**
-     * The prevents hoppsdfers from pulling the ghost items.  Also seems to block some advancement-related code.
+     * The prevents hoppers from pulling the ghost items.  Also seems to block some advancement-related code.
      */
     @Override
     public boolean isAlive() { return false; }
