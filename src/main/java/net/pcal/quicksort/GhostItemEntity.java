@@ -1,10 +1,12 @@
 package net.pcal.quicksort;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * These are the 'ghost' entities that fly from the quicksorter to the target chests when sorting is happening.
@@ -46,6 +48,18 @@ public class GhostItemEntity extends ItemEntity {
      * I don't think this actually does anything.
      */
     @Override
+    public boolean isAffectedByBlocks() { return false; }
+
+    /**
+     * I don't think this actually does anything.
+     */
+    @Override
+    public boolean isColliding(BlockPos pos, BlockState state) { return false; }
+
+    /**
+     * I don't think this actually does anything.
+     */
+    @Override
     public boolean isInWall() { return false; }
 
     /**
@@ -81,3 +95,4 @@ public class GhostItemEntity extends ItemEntity {
         return false;
     }
 }
+
