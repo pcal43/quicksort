@@ -41,8 +41,8 @@ public class GhostItemEntity extends ItemEntity {
     /**
      * I don't think this actually does anything.
      */
-    //@Override
-    protected void checkInsideBlocks() {}
+    @Override
+    public boolean isIgnoringBlockTriggers() { return true;} 
 
     /**
      * I don't think this actually does anything.
