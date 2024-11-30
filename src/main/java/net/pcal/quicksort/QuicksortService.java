@@ -1,5 +1,16 @@
 package net.pcal.quicksort;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import static java.util.Objects.requireNonNull;
+import java.util.Random;
+
+import org.apache.logging.log4j.Logger;
+
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
+import static net.minecraft.world.level.block.ChestBlock.getContainer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
@@ -26,18 +38,6 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
-import org.apache.logging.log4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import static java.util.Objects.requireNonNull;
-import static net.minecraft.world.level.block.ChestBlock.getContainer;
 
 /**
  * Singleton that makes the quicksorter chests do their thing.
@@ -129,10 +129,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
 
     // ===================================================================================
     // Private stuff
-
-    private QuicksortChestConfig getChestConfigFor(ChestBlockEntity chest) {
-        return getChestConfigFor(chest.getLevel(), chest.getBlockPos());
-    }
 
     private QuicksortChestConfig getChestConfigFor(Level world, BlockPos chestPos) {
         final Block baseBlock = world.getBlockState(chestPos.below()).getBlock();
