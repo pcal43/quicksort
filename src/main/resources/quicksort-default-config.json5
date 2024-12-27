@@ -31,11 +31,11 @@
       // pitch of sound
       'soundPitch': 2.0,
 
-      // Sorted items with these ids will also have to have matching nbts.  This means that the enchantments
-      // will have to line up, which is (probably) desirable if you're sorting enchanted books (where you
-      // may want to sort by enchantment) but maybe less so if you're sorting diamond swords (where you probably
-      // want to just dump them all in one chest regardless of enchantment).
-      'nbtMatchEnabledIds': ['minecraft:enchanted_book'],
+      // Sorted items with these ids will only match if their enchantments also match.  This is probably desirable
+      // if you're sorting books and potions books (where you may want to sort by enchantment) but maybe less so if
+      // you're sorting diamond swords (where you probably want to just dump them all in one chest regardless of
+      // enchantment).
+      'enchantmentMatchingIds': ['minecraft:enchanted_book', 'minecraft:potion'],
 
       // Ids of blocks that will be considered valid targets for sorting.  Listed blocks must be block entities
       // with an inventory.
