@@ -9,6 +9,9 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Random;
 
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -19,7 +22,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -250,7 +252,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             for (TargetContainer visibleContainer : allVisibleContainers) {
                 final Container targetInventory = getInventoryFor(world, visibleContainer.blockPos());
                 if (targetInventory == null) continue;
-                if (isValidTarget(originStack, targetInventory, chestConfig.nbtMatchEnabledIds())) {
+                if (isValidTarget(originStack, targetInventory, chestConfig.enchantmentMatchingIds())) {
                     targetContainers.add(visibleContainer);
                 }
             }
@@ -328,7 +330,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         /**
          * @return true if the given targetInventory can accept items from the given stack.
          */
-        private static boolean isValidTarget(ItemStack originStack, Container targetInventory, Collection<ResourceLocation> nbtMatchEnabledIds) {
+        private static boolean isValidTarget(ItemStack originStack, Container targetInventory, Collection<ResourceLocation> enchantmentMatchingIds) {
             requireNonNull(targetInventory, "inventory");
             requireNonNull(originStack, "item");
             Integer firstEmptySlot = null;
@@ -338,7 +340,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                 if (targetStack.isEmpty()) {
                     if (hasMatchingItem) return true; // this one's empty and a match was found earlier. done.
                     if (firstEmptySlot == null) firstEmptySlot = slot; // else remember this empty slot
-                } else if (isMatch(originStack, targetStack, nbtMatchEnabledIds)) {
+                } else if (isMatch(originStack, targetStack, enchantmentMatchingIds)) {
                     if (firstEmptySlot != null) return true;
                     if (!isFull(targetStack)) return true;
                     hasMatchingItem = true;
@@ -347,30 +349,41 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             return false;
         }
 
-        private static boolean isMatch(ItemStack first, ItemStack second, Collection<ResourceLocation> nbtMatchEnabledIds) {
+        /**
+         * @return if the two items are of the same type and, if the item is contained in enchantmentMatchingIds, the
+         * stacks have the same enchantments.
+         */
+        private static boolean isMatch(ItemStack first, ItemStack second, Collection<ResourceLocation> enchantmentMatchEnabledIds) {
             return first.is(second.getItem()) &&
-                    (!nbtMatchEnabledIds.contains(BuiltInRegistries.ITEM.getKey(first.getItem())) ||
-                            areNbtEqual(first, second));
+                    (!enchantmentMatchEnabledIds.contains(BuiltInRegistries.ITEM.getKey(first.getItem())) ||
+                            areEnchantmentsEqual(first, second));
         }
 
-        private static boolean isFull(ItemStack stack) {
-            return stack.getCount() == stack.getMaxStackSize();
-        }
-
-        private static boolean areNbtEqual(ItemStack left, ItemStack right) {
+        /**
+         * @return whether the enchantments on the two items are equal.  The implementation here elides distinctions
+         * between different kinds of enchantments that minecraft now maintains.  But this is probably aligned with
+         * what most folks will expect.
+         */
+        private static boolean areEnchantmentsEqual(ItemStack left, ItemStack right) {
             if (left.isEmpty() && right.isEmpty()) {
                 return true;
             } else if (!left.isEmpty() && !right.isEmpty()) {
-                final TagKey<Item> leftTag = left.getTags().findFirst().orElse(null);
-                final TagKey<Item> rightTag = right.getTags().findFirst().orElse(null);
-                if (leftTag == null && rightTag != null) {
-                    return false;
-                } else {
-                    return leftTag == null || leftTag.equals(rightTag);
-                }
+                return left.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY).equals(
+                        right.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY)) &&
+                        left.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY).equals(
+                                right.getOrDefault(DataComponents.STORED_ENCHANTMENTS, ItemEnchantments.EMPTY)) &&
+                        left.getOrDefault(DataComponents.POTION_CONTENTS, ItemEnchantments.EMPTY).equals(
+                                right.getOrDefault(DataComponents.POTION_CONTENTS, ItemEnchantments.EMPTY));
             } else {
                 return false;
             }
+        }
+
+        /**
+         * @return true if the given stack has as many items as are allowed for the stacked item type.
+         */
+        private static boolean isFull(ItemStack stack) {
+            return stack.getCount() == stack.getMaxStackSize();
         }
     }
 

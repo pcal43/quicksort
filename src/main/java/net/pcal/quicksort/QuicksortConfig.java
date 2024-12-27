@@ -18,7 +18,7 @@ public record QuicksortConfig(
             int animationTicks,
             float soundVolume,
             float soundPitch,
-            Set<ResourceLocation> nbtMatchEnabledIds,
+            Set<ResourceLocation> enchantmentMatchingIds,
             Set<ResourceLocation> targetContainerIds
     ) {
     }
