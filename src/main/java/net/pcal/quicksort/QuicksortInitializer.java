@@ -50,7 +50,7 @@ public class QuicksortInitializer implements ModInitializer {
         //
         final Path configFilePath = Paths.get("config", CONFIG_FILENAME);
         final QuicksortConfig config;
-
+        // If they don't have a config file, create a default one that they can edit later
         if (!configFilePath.toFile().exists()) {
             logger.info(LOG_PREFIX + "Writing default configuration to " + configFilePath);
             try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
@@ -59,11 +59,13 @@ public class QuicksortInitializer implements ModInitializer {
                 java.nio.file.Files.copy(in, configFilePath, StandardCopyOption.REPLACE_EXISTING);
             }
         }
-        logger.info(LOG_PREFIX + "Loading configuration from " + configFilePath);
+        // Load the default config from our resource path.  We'll use the values here as defaults for loading their config.
+        // This will allow us to more easily add new configuration values without breaking existing configs.
         final QuicksortConfig defaultConfig;
         try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
             defaultConfig = QuicksortConfigParser.parse(in, null);
         }
+        logger.info(LOG_PREFIX + "Loading configuration from " + configFilePath);
         try (final InputStream in = new FileInputStream(configFilePath.toFile())) {
             // parse the config file using the first chest config from our embedded defaults as the default
             config = QuicksortConfigParser.parse(in, defaultConfig.chestConfigs().get(0));

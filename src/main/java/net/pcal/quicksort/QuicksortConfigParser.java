@@ -35,7 +35,7 @@ class QuicksortConfigParser {
                     chestGson.animationTicks,
                     chestGson.soundVolume,
                     chestGson.soundPitch,
-                    chestGson.nbtMatchEnabledIds,
+                    chestGson.nbtMatchEnabledIds != null ? chestGson.nbtMatchEnabledIds : chestGson.enchantmentMatchingIds,
                     chestGson.targetContainerIds));
         }
         // adjust logging to configured level
@@ -53,7 +53,7 @@ class QuicksortConfigParser {
             Integer animationTicks,
             Float soundVolume,
             Float soundPitch,
-            Collection<String> nbtMatchEnabledIds,
+            Collection<String> enchantmentMatchingIds,
             Collection<String> targetContainerIds) {
         return new QuicksortChestConfig(
                 ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
@@ -67,16 +67,16 @@ class QuicksortConfigParser {
                         "soundVolume is required"),
                 requireNonNull(soundPitch != null ? soundPitch : dflt == null ? null : dflt.soundPitch(),
                         "soundPitch is required"),
-                requireNonNull(nbtMatchEnabledIds != null ? toIdentifierSet(nbtMatchEnabledIds) : dflt == null ? null : dflt.nbtMatchEnabledIds(),
-                        "nbtMatchEnabledIds"),
+                requireNonNull(enchantmentMatchingIds != null ? toIdentifierSet(enchantmentMatchingIds) : dflt == null ? null : dflt.enchantmentMatchingIds(),
+                        "enchantmentMatchingIds"),
                 requireNonNull(targetContainerIds != null ? toIdentifierSet(targetContainerIds) : dflt == null ? null : dflt.targetContainerIds(),
                         "targetContainerIds")
         );
     }
 
-    private static Set<ResourceLocation> toIdentifierSet(Collection<String> nbtMatchEnabledIds) {
+    private static Set<ResourceLocation> toIdentifierSet(Collection<String> enchantmentMatchingIds) {
         final Set<ResourceLocation> set = new HashSet<>();
-        for (String id : nbtMatchEnabledIds) set.add(ResourceLocation.parse(id));
+        for (String id : enchantmentMatchingIds) set.add(ResourceLocation.parse(id));
         return set;
     }
 
@@ -108,7 +108,10 @@ class QuicksortConfigParser {
         Integer animationTicks;
         Float soundVolume;
         Float soundPitch;
-        List<String> nbtMatchEnabledIds;
+        List<String> enchantmentMatchingIds;
         List<String> targetContainerIds;
+
+        @Deprecated // this was the old name for enchantmentMatchingIds
+        List<String> nbtMatchEnabledIds;
     }
 }
