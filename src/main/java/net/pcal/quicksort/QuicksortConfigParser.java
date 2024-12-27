@@ -29,6 +29,7 @@ class QuicksortConfigParser {
         final QuicksortConfigGson configGson = gson.fromJson(rawJson, QuicksortConfigGson.class);
         for (QuicksortChestConfigGson chestGson : configGson.quicksortChests) {
             chests.add(defaultChestConfig = createWithDefaults(defaultChestConfig,
+                    chestGson.chestName,
                     chestGson.baseBlockId,
                     chestGson.range,
                     chestGson.cooldownTicks,
@@ -47,6 +48,7 @@ class QuicksortConfigParser {
 
     static QuicksortChestConfig createWithDefaults(
             QuicksortChestConfig dflt,
+            String chestName,
             String baseBlockId,
             Integer range,
             Integer cooldownTicks,
@@ -55,8 +57,19 @@ class QuicksortConfigParser {
             Float soundPitch,
             Collection<String> enchantmentMatchingIds,
             Collection<String> targetContainerIds) {
+
+        // First, check if chestName is provided, if so, use it.
+        String finalChestName = (chestName != null && !chestName.isEmpty()) ? chestName : (dflt == null ? null : dflt.chestName());
+
+        // If chestName is not provided, fallback to baseBlockId, and convert it to ResourceLocation
+        ResourceLocation finalBaseBlockId = (finalChestName == null && baseBlockId != null && !baseBlockId.isEmpty())
+                ? ResourceLocation.parse(baseBlockId)
+                : (dflt == null ? null : dflt.baseBlockId());
+
         return new QuicksortChestConfig(
-                ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
+                //ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
+                finalChestName,  // Use chestName if available
+                finalBaseBlockId != null ? ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")) : null,  // Only use baseBlockId if chestName is not present
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
                         "range is required"),
                 requireNonNull(cooldownTicks != null ? cooldownTicks : dflt == null ? null : dflt.cooldownTicks(),
@@ -102,6 +115,7 @@ class QuicksortConfigParser {
     }
 
     public static class QuicksortChestConfigGson {
+        String chestName;
         String baseBlockId;
         Integer range;
         Integer cooldownTicks;

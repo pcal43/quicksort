@@ -12,6 +12,7 @@ public record QuicksortConfig(
 ) {
 
     public record QuicksortChestConfig(
+            String chestName,
             ResourceLocation baseBlockId,
             int range,
             int cooldownTicks,

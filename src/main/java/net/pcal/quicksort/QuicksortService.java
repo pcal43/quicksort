@@ -133,6 +133,17 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     // Private stuff
 
     private QuicksortChestConfig getChestConfigFor(Level world, BlockPos chestPos) {
+        final BlockEntity blockEntity = world.getBlockEntity(chestPos);
+        if (blockEntity instanceof ChestBlockEntity chestBlockEntity){
+            final String chestName = chestBlockEntity.getName().getString();
+
+            for (final QuicksortChestConfig chestConfig : this.config.values()) {
+                if (chestConfig.chestName() != null && chestConfig.chestName().equals(chestName)) {
+                    return  chestConfig;
+                }
+            }
+        }
+
         final Block baseBlock = world.getBlockState(chestPos.below()).getBlock();
         final ResourceLocation baseBlockId = BuiltInRegistries.BLOCK.getKey(baseBlock);
         return this.config.get(baseBlockId);
