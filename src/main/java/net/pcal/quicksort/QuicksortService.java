@@ -130,10 +130,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     // ===================================================================================
     // Private stuff
 
-    private QuicksortChestConfig getChestConfigFor(ChestBlockEntity chest) {
-        return getChestConfigFor(chest.getLevel(), chest.getBlockPos());
-    }
-
     private QuicksortChestConfig getChestConfigFor(Level world, BlockPos chestPos) {
         final Block baseBlock = world.getBlockState(chestPos.below()).getBlock();
         final ResourceLocation baseBlockId = BuiltInRegistries.BLOCK.getKey(baseBlock);
