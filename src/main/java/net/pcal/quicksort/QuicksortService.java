@@ -349,16 +349,21 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             return false;
         }
 
+        /**
+         * @return if the two items are of the same type and, if the item is contained in enchantmentMatchingIds, the
+         * stacks have the same enchantments.
+         */
         private static boolean isMatch(ItemStack first, ItemStack second, Collection<ResourceLocation> enchantmentMatchEnabledIds) {
             return first.is(second.getItem()) &&
                     (!enchantmentMatchEnabledIds.contains(BuiltInRegistries.ITEM.getKey(first.getItem())) ||
                             areEnchantmentsEqual(first, second));
         }
 
-        private static boolean isFull(ItemStack stack) {
-            return stack.getCount() == stack.getMaxStackSize();
-        }
-
+        /**
+         * @return whether the enchantments on the two items are equal.  The implementation here elides distinctions
+         * between different kinds of enchantments that minecraft now maintains.  But this is probably aligned with
+         * what most folks will expect.
+         */
         private static boolean areEnchantmentsEqual(ItemStack left, ItemStack right) {
             if (left.isEmpty() && right.isEmpty()) {
                 return true;
@@ -372,6 +377,13 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             } else {
                 return false;
             }
+        }
+
+        /**
+         * @return true if the given stack has as many items as are allowed for the stacked item type.
+         */
+        private static boolean isFull(ItemStack stack) {
+            return stack.getCount() == stack.getMaxStackSize();
         }
     }
 
