@@ -39,7 +39,7 @@
 
       // Ids of blocks that will be considered valid targets for sorting.  Listed blocks must be block entities
       // with an inventory.
-      'targetContainerIds': ['minecraft:chest']
+      'targetContainerIds': ['minecraft:chest', 'minecraft:ender_chest', 'minecraft:barrel', 'ironchests:netherite_chest', 'ironchests:diamond_chest', 'ironchests:obsidian_chest', 'ironchests:crystal_chest', 'ironchests:gold_chest', 'ironchests:iron_chest', 'ironchests:copper_chest', 'ironchests:netherite_barrel', 'ironchests:diamond_barrel', 'ironchests:crystal_barrel', 'ironchests:obsidian_barrel', 'ironchests:gold_barrel', 'ironchests:iron_barrel', 'ironchests:copper_barrel', 'netherchested:nether_chest']
     },
     {
       // type of the block under the chest
