@@ -1,6 +1,7 @@
 package net.pcal.quicksort;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -78,7 +79,7 @@ public class GhostItemEntity extends ItemEntity {
      * I don't think this actually does anything.
      */
     @Override    
-    public boolean canBeCollidedWith() { return false; }
+    public boolean canCollideWith(Entity e) { return false; }
 
     /**
      * I don't think this actually does anything.
