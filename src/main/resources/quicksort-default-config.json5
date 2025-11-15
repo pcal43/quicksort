@@ -13,6 +13,16 @@
   //
   'quicksortChests' : [
     {
+      'chestName': 'Quicksorter',  // Use chestName for clean design
+      'range': 10,  // Range at which target chests will be detected
+      'cooldownTicks': 3,  // Number of ticks between items
+      'animationTicks': 10,  // Number of ticks it takes the item animation to complete. Set to -1 to disable animation.
+      'soundVolume': 0.75,
+      'soundPitch': 2.0,
+      'enchantmentMatchingIds': ['minecraft:enchanted_book', 'minecraft:potion'],  // Sorted items with these IDs will only match if their enchantments also match
+      'targetContainerIds': ['minecraft:chest']   // IDs of blocks that will be considered valid targets for sorting. Listed blocks must be block entities with an inventory.
+    },
+    {
       // type of the block under the chest
       'baseBlockId': 'minecraft:diamond_block',
 
