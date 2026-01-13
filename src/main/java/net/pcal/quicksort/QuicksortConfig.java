@@ -4,7 +4,7 @@ import org.apache.logging.log4j.Level;
 
 import java.util.List;
 import java.util.Set;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record QuicksortConfig(
         List<QuicksortChestConfig> chestConfigs,
@@ -12,14 +12,14 @@ public record QuicksortConfig(
 ) {
 
     public record QuicksortChestConfig(
-            ResourceLocation baseBlockId,
+            Identifier baseBlockId,
             int range,
             int cooldownTicks,
             int animationTicks,
             float soundVolume,
             float soundPitch,
-            Set<ResourceLocation> enchantmentMatchingIds,
-            Set<ResourceLocation> targetContainerIds
+            Set<Identifier> enchantmentMatchingIds,
+            Set<Identifier> targetContainerIds
     ) {
     }
 }

@@ -1,7 +1,7 @@
 package net.pcal.quicksort;
 
 import com.google.gson.Gson;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 import org.apache.logging.log4j.Level;
 
@@ -56,7 +56,7 @@ class QuicksortConfigParser {
             Collection<String> enchantmentMatchingIds,
             Collection<String> targetContainerIds) {
         return new QuicksortChestConfig(
-                ResourceLocation.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
+                Identifier.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
                         "range is required"),
                 requireNonNull(cooldownTicks != null ? cooldownTicks : dflt == null ? null : dflt.cooldownTicks(),
@@ -74,9 +74,9 @@ class QuicksortConfigParser {
         );
     }
 
-    private static Set<ResourceLocation> toIdentifierSet(Collection<String> enchantmentMatchingIds) {
-        final Set<ResourceLocation> set = new HashSet<>();
-        for (String id : enchantmentMatchingIds) set.add(ResourceLocation.parse(id));
+    private static Set<Identifier> toIdentifierSet(Collection<String> enchantmentMatchingIds) {
+        final Set<Identifier> set = new HashSet<>();
+        for (String id : enchantmentMatchingIds) set.add(Identifier.parse(id));
         return set;
     }
 
