@@ -73,11 +73,11 @@ jar {
 // https://github.com/modrinth/minotaur
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
-	projectId = "R7Xsgpzr"
+	projectId = "${project.modrinth_projectId}"
 	versionNumber = project.mod_version
 	versionType = "Release"
 	uploadFile = remapJar
-	changelog = "<p><a href='https://github.com/pcal43/quicksort/releases/tag/${project.mod_version}'>https://github.com/pcal43/quicksort/releases/tag/${project.mod_version}</a></p>"
+	changelog = "<p><a href='${project.github_projectUrl}/releases/tag/${project.mod_version}'>${project.github_projectUrl}/releases/tag/${project.mod_version}</a></p>"
 	gameVersions = ["${project.minecraft_version}"]
 	loaders = ["fabric"]
 	dependencies {
@@ -96,7 +96,7 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 	def mainFile = upload(project.curseforge_projectId, remapJar)
 
 	mainFile.releaseType = "release"
-	mainFile.changelog = "https://github.com/pcal43/${project.github_projectId}/releases/tag/${project.mod_version}"
+	mainFile.changelog = "${project.github_projectUrl}/releases/tag/${project.mod_version}"
 	mainFile.changelogType = "markdown"
 
 	mainFile.addGameVersion(project.minecraft_version)
