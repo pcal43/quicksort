@@ -38,7 +38,11 @@ jobs:
       - name: derive release version
         shell: bash
         run: |
-          MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)"
+          MOD_VERSION="$(awk -F= '/^[[:space:]]*mod_version[[:space:]]*=/{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit}' gradle.properties)"
+          if [ -z "$MOD_VERSION" ]; then
+            echo "Unable to find mod_version in gradle.properties" >&2
+            exit 1
+          fi
           RELEASE_VERSION="${MOD_VERSION%%+*}"
           echo "MOD_VERSION=${MOD_VERSION}" >> "$GITHUB_ENV"
           echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "$GITHUB_ENV"
