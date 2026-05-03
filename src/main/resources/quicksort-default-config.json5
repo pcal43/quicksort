@@ -6,50 +6,104 @@
 //
 
 {
-  // List of configurations for quicksort chest types.  A type is determined by the type of the block underneath
+  // List of configurations for quicksort chest types. A type is determined by the type of the block underneath
   // the chest (baseBlockId).
   //
   // If more than one quicksortChest is defined, each will take default values from the one that preceded it.
   //
   'quicksortChests' : [
     {
-      // type of the block under the chest
-      'baseBlockId': 'minecraft:diamond_block',
+      // Type of the block under the chest.
+      'baseBlockId': 'minecraft:iron_block',
 
-      // range at which target chests will be detected
-      'range': 10,
+      // Cube radius where target containers will be detected.
+      'range': 5,
 
-      // number of ticks between items
+      // Number of ticks between transfer attempts.
       'cooldownTicks': 3,
 
-      // number of ticks it takes the item animation to complete.  set to -1 to disable animation.
+      // Number of ticks it takes the item animation to complete. Set to -1 to disable animation.
       'animationTicks': 10,
 
-      // volume of sound
+      // Animation renderer.
+      // - PARTICLE is the default and safest mode.
+      // - ENTITY uses temporary item entities for the old flying-item style.
+      'animationMode': 'PARTICLE',
+
+      // Volume of the transfer sound.
       'soundVolume': 0.75,
 
-      // pitch of sound
+      // Pitch of the transfer sound.
       'soundPitch': 2.0,
 
-      // Sorted items with these ids will only match if their enchantments also match.  This is probably desirable
-      // if you're sorting books and potions books (where you may want to sort by enchantment) but maybe less so if
-      // you're sorting diamond swords (where you probably want to just dump them all in one chest regardless of
+      // If true, solid blocks between the quicksorter and target container will block transfers to that target.
+      'checkObstructions': true,
+
+      // Transfer mode:
+      // - ITEMS sends up to transferAmount items for each item type on each transfer cycle.
+      // - STACKS sends up to transferAmount stacks total on each transfer cycle.
+      'transferMode': 'ITEMS',
+
+      // Amount used by transferMode each time cooldownTicks elapses.
+      // In ITEMS mode this is per item type; in STACKS mode this is total stacks.
+      'transferAmount': 1,
+
+      // If true, sorting starts automatically when the base block receives a redstone signal.
+      // Sorting starts only when the signal changes from off to on, not every tick while powered.
+      'enableRedstoneActivation': false,
+
+      // If true, sorting continues while the quicksort chest is open. If false, opening the chest pauses sorting
+      // and closing it starts sorting again.
+      'continueWhileOpen': false,
+
+      // Sorted items with these ids will only match if their enchantments/components also match. This is probably
+      // desirable if you're sorting books and potions (where you may want to sort by enchantment/effect) but maybe
+      // less so if you're sorting diamond swords (where you probably want to dump them all together regardless of
       // enchantment).
       'enchantmentMatchingIds': ['minecraft:enchanted_book', 'minecraft:potion'],
 
-      // Ids of blocks that will be considered valid targets for sorting.  Listed blocks must be block entities
+      // Ids of blocks that will be considered valid targets for sorting. Listed blocks must be block entities
       // with an inventory.
       'targetContainerIds': ['minecraft:chest']
     },
     {
-      // type of the block under the chest
+      // Type of the block under the chest.
+      'baseBlockId': 'minecraft:copper_block',
+
+      // Cube radius where target containers will be detected.
+      'range': 5
+    },
+    {
+      // Type of the block under the chest.
+      'baseBlockId': 'minecraft:gold_block',
+
+      // Cube radius where target containers will be detected.
+      'range': 10
+    },
+    {
+      // Type of the block under the chest.
       'baseBlockId': 'minecraft:emerald_block',
 
-      // range at which target chests will be detected
-      'range': 5
-    }
+      // Cube radius where target containers will be detected.
+      'range': 25
+    },
+    {
+      // Type of the block under the chest.
+      'baseBlockId': 'minecraft:diamond_block',
 
+      // Cube radius where target containers will be detected.
+      'range': 50
+    },
+    {
+      // Type of the block under the chest.
+      'baseBlockId': 'minecraft:netherite_block',
+
+      // Cube radius where target containers will be detected.
+      'range': 100
+    }
   ],
 
-  'logLevel' : 'INFO'
+  // Log level: DEBUG for detailed diagnostic logs, INFO for normal operation
+  // DEBUG is recommended when troubleshooting world loading issues
+  'logLevel' : 'DEBUG'
 }

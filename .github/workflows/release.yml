@@ -1,0 +1,75 @@
+name: release
+
+on:
+  push:
+    branches:
+      - 'Fabric-26.1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: setup jdk
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: build
+        run: ./gradlew build
+
+      - name: derive release version
+        shell: bash
+        run: |
+          MOD_VERSION="$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)"
+          RELEASE_VERSION="${MOD_VERSION%%+*}"
+          echo "MOD_VERSION=${MOD_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${RELEASE_VERSION}" >> "$GITHUB_ENV"
+
+      - name: prepare release notes
+        shell: bash
+        run: |
+          NOTES_FILE=".github/release-notes/${RELEASE_TAG}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            cp "$NOTES_FILE" release-notes.md
+          else
+            cat > release-notes.md <<EOF
+          ## Release
+
+          - Loader: \`Fabric\`
+          - Version: \`${MOD_VERSION}\`
+          - Branch: \`${GITHUB_REF_NAME}\`
+
+          ## Changelog
+
+          - Automated Quicksort release for Minecraft 26.1.
+          EOF
+          fi
+
+      - name: publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Quicksort Fabric ${{ env.MOD_VERSION }}
+          body_path: release-notes.md
+          files: |
+            build/libs/*.jar
