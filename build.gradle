@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.14-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id "com.modrinth.minotaur" version "2.+"
 	id 'net.darkhax.curseforgegradle' version '1.1.25'
 }
@@ -25,9 +25,8 @@ configurations {
 dependencies {
 	// Fabric & Minecraft
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// JUnit
 	testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
@@ -52,8 +51,8 @@ sourceSets.test {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	// Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
-	it.options.release = 17
+	// Minecraft 26.1 development requires Java 25.
+	it.options.release = 25
 }
 
 java {
@@ -61,6 +60,9 @@ java {
 	// if it is present.
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
@@ -76,7 +78,7 @@ modrinth {
 	projectId = "${project.modrinth_projectId}"
 	versionNumber = project.mod_version
 	versionType = "Release"
-	uploadFile = remapJar
+	uploadFile = jar
 	changelog = "<p><a href='${project.github_projectUrl}/releases/tag/${project.mod_version}'>${project.github_projectUrl}/releases/tag/${project.mod_version}</a></p>"
 	gameVersions = ["${project.minecraft_version}"]
 	loaders = ["fabric"]
@@ -93,7 +95,7 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 
 	// Configure the main artifact
 	// The plugin automatically detects Fabric & Java version from your Loom setup
-	def mainFile = upload(project.curseforge_projectId, remapJar)
+	def mainFile = upload(project.curseforge_projectId, jar)
 
 	mainFile.releaseType = "release"
 	mainFile.changelog = "${project.github_projectUrl}/releases/tag/${project.mod_version}"
@@ -102,8 +104,8 @@ tasks.register('publishCurseForge', TaskPublishCurseForge) {
 	mainFile.addGameVersion(project.minecraft_version)
 	mainFile.addModLoader("Fabric")
 
-	// Ensure remapJar is finished before this runs
-	dependsOn(remapJar)
+	// Ensure jar is finished before this runs
+	dependsOn(jar)
 }
 
 

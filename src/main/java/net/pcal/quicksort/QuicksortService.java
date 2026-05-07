@@ -9,7 +9,6 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Random;
 
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +43,7 @@ import net.pcal.quicksort.QuicksortConfig.QuicksortChestConfig;
 /**
  * Singleton that makes the quicksorter chests do their thing.
  */
-public class QuicksortService implements ServerTickEvents.EndWorldTick {
+public class QuicksortService implements ServerTickEvents.EndLevelTick {
 
     // ===================================================================================
     // Singleton
@@ -110,7 +109,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     // ===================================================================================
-    // EndWorldTick implementation
+    // EndLevelTick implementation
 
     @Override
     public void onEndTick(ServerLevel world) {
@@ -209,14 +208,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         }
 
         private void createGhost(ServerLevel world, Item item, TargetContainer targetChest) {
-            world.playSound(
-                    null,                            // Player - if non-null, will play sound for every nearby player *except* the specified player
-                    this.quicksorterPos,             // The position of where the sound will come from
-                    SoundEvents.UI_TOAST_OUT,        // The sound that will play, in this case, the sound the anvil plays when it lands.
-                    SoundSource.BLOCKS,            // This determines which of the volume sliders affect this sound
-                    quicksorterConfig.soundVolume(), // .75f
-                    quicksorterConfig.soundPitch()   // 2.0f // Pitch multiplier, 1 is normal, 0.5 is half pitch, etc
-            );
+            playTransferSound(world, targetChest);
             ItemStack ghostStack = new ItemStack(item, 1);
             GhostItemEntity itemEntity = new GhostItemEntity(world,
                     targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(), ghostStack);
@@ -226,6 +218,22 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             itemEntity.setInvulnerable(true);
             itemEntity.setDeltaMovement(targetChest.itemVelocity);
             world.addFreshEntity(itemEntity);
+        }
+
+        private void playTransferSound(ServerLevel world, TargetContainer targetChest) {
+            final float volume = this.quicksorterConfig.soundVolume();
+            if (volume <= 0.0F) return;
+            final Vec3 soundPos = Vec3.atCenterOf(this.quicksorterPos);
+            world.playSeededSound(
+                    null,
+                    soundPos.x(),
+                    soundPos.y(),
+                    soundPos.z(),
+                    SoundEvents.UI_TOAST_OUT,
+                    SoundSource.BLOCKS,
+                    volume,
+                    this.quicksorterConfig.soundPitch(),
+                    world.getRandom().nextLong());
         }
 
         public void stop() {
