@@ -15,7 +15,7 @@
 
 
 ## Fine Points
-* The Quicksorter must have a clear line-of-sight to the receiving chests
+* By default, the Quicksorter must have a clear line-of-sight to the receiving chests
 * The receiving chests must be within a cube-shaped area centered on the Quicksorter.
 * The Quicksorter's range depends on the type of block used:
   * Emerald: 5 blocks away

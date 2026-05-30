@@ -14,6 +14,7 @@ public record QuicksortConfig(
     public record QuicksortChestConfig(
             Identifier baseBlockId,
             int range,
+            boolean requireLineOfSight,
             int cooldownTicks,
             int animationTicks,
             float soundVolume,
@@ -23,4 +24,3 @@ public record QuicksortConfig(
     ) {
     }
 }
-

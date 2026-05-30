@@ -31,6 +31,7 @@ class QuicksortConfigParser {
             chests.add(defaultChestConfig = createWithDefaults(defaultChestConfig,
                     chestGson.baseBlockId,
                     chestGson.range,
+                    chestGson.requireLineOfSight,
                     chestGson.cooldownTicks,
                     chestGson.animationTicks,
                     chestGson.soundVolume,
@@ -49,6 +50,7 @@ class QuicksortConfigParser {
             QuicksortChestConfig dflt,
             String baseBlockId,
             Integer range,
+            Boolean requireLineOfSight,
             Integer cooldownTicks,
             Integer animationTicks,
             Float soundVolume,
@@ -59,6 +61,7 @@ class QuicksortConfigParser {
                 Identifier.parse(requireNonNull(baseBlockId, "baseBlockId is required")),
                 requireNonNull(range != null ? range : dflt == null ? null : dflt.range(),
                         "range is required"),
+                requireLineOfSight != null ? requireLineOfSight : dflt == null || dflt.requireLineOfSight(),
                 requireNonNull(cooldownTicks != null ? cooldownTicks : dflt == null ? null : dflt.cooldownTicks(),
                         "cooldownTicks is required"),
                 requireNonNull(animationTicks != null ? animationTicks : dflt == null ? null : dflt.animationTicks(),
@@ -104,6 +107,7 @@ class QuicksortConfigParser {
     public static class QuicksortChestConfigGson {
         String baseBlockId;
         Integer range;
+        Boolean requireLineOfSight;
         Integer cooldownTicks;
         Integer animationTicks;
         Float soundVolume;

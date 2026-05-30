@@ -19,6 +19,9 @@
       // range at which target chests will be detected
       'range': 10,
 
+      // whether the quicksorter must have a clear line-of-sight to target containers
+      'requireLineOfSight': true,
+
       // number of ticks between items
       'cooldownTicks': 3,
 
