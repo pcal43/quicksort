@@ -415,10 +415,18 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     final Vec3 origin = getTransferPoint(originChest.getBlockPos(), targetPos);
                     final Vec3 target = getTransferPoint(targetPos, originChest.getBlockPos());
 
-                    BlockHitResult result = world.clip(new ClipContext(origin, target,
-                            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
-                    if (result.getLocation().equals(target)) {
-                        this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
+                    final boolean lineOfSightClear;
+                    if (chestConfig.requireLineOfSight()) {
+                        BlockHitResult result = world.clip(new ClipContext(origin, target,
+                                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
+                        lineOfSightClear = result.getLocation().equals(target);
+                        if (lineOfSightClear) {
+                            this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
+                        }
+                    } else {
+                        lineOfSightClear = true;
+                    }
+                    if (lineOfSightClear) {
                         Vec3 itemVelocity = new Vec3(
                                 (target.x() - origin.x()) / chestConfig.animationTicks(),
                                 (target.y() - origin.y()) / chestConfig.animationTicks(),
