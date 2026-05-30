@@ -180,8 +180,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             final Iterator<GhostItemEntity> g = this.ghostItems.iterator();
             while (g.hasNext()) {
                 final GhostItemEntity e = g.next();
-                if (e.getAge() > this.quicksorterConfig.animationTicks()) {
-                    e.makeFakeItem();
+                if (e.hasReachedTarget()) {
+                    e.discard();
                     g.remove();
                 }
             }
@@ -219,8 +219,10 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
             );
             ItemStack ghostStack = new ItemStack(item, 1);
             GhostItemEntity itemEntity = new GhostItemEntity(world,
-                    targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(), ghostStack);
+                    targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(),
+                    ghostStack, targetChest.targetItemPos);
             this.ghostItems.add(itemEntity);
+            itemEntity.setPosRotInterpolationDuration(1);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);
@@ -390,13 +392,13 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     private record TargetContainer(
             BlockPos blockPos,     // position of the container
             Vec3 originItemPos,   // coordinates where the GhostItem should appear outside the origin container
-            Vec3 targetItemPos,   // coordinates the GhostItem should travel to outside the target container
+            Vec3 targetItemPos,   // coordinates the GhostItem should travel to in the target container
             Vec3 itemVelocity     // how fast the GhostItem should travel
     ) {
     }
 
     private List<TargetContainer> getVisibleChestsNear(ServerLevel world, QuicksortChestConfig chestConfig,ChestBlockEntity originChest, int distance) {
-        final GhostItemEntity itemEntity = new GhostItemEntity(world, 0, 0, 0, new ItemStack(Blocks.COBBLESTONE));
+        final GhostItemEntity itemEntity = new GhostItemEntity(world, 0, 0, 0, new ItemStack(Blocks.COBBLESTONE), Vec3.ZERO);
         List<TargetContainer> out = new ArrayList<>();
         for (int d = originChest.getBlockPos().getX() - distance; d <= originChest.getBlockPos().getX() + distance; d++) {
             for (int e = originChest.getBlockPos().getY() - distance; e <= originChest.getBlockPos().getY() + distance; e++) {
@@ -412,14 +414,16 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                         continue; // skip other sorting chests
                     }
 
-                    final Vec3 origin = getTransferPoint(originChest.getBlockPos(), targetPos);
-                    final Vec3 target = getTransferPoint(targetPos, originChest.getBlockPos());
+                    final Vec3 origin = getAnimationPoint(originChest.getBlockPos());
+                    final Vec3 lineOfSightOrigin = getTransferPoint(originChest.getBlockPos(), targetPos);
+                    final Vec3 lineOfSightTarget = getTransferPoint(targetPos, originChest.getBlockPos());
+                    final Vec3 target = getAnimationPoint(targetPos);
 
                     final boolean lineOfSightClear;
                     if (chestConfig.requireLineOfSight()) {
-                        BlockHitResult result = world.clip(new ClipContext(origin, target,
+                        BlockHitResult result = world.clip(new ClipContext(lineOfSightOrigin, lineOfSightTarget,
                                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
-                        lineOfSightClear = result.getLocation().equals(target);
+                        lineOfSightClear = result.getLocation().equals(lineOfSightTarget);
                         if (lineOfSightClear) {
                             this.logger.debug(() -> LOG_PREFIX + " visible chest found at " + result.getBlockPos() + " " + targetPos);
                         }
@@ -444,5 +448,9 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
         Vec3 target3d = Vec3.atCenterOf(target);
         Vec3 vector = target3d.subtract(origin3d).normalize();
         return origin3d.add(vector).add(0, -0.5D, 0);
+    }
+
+    private static Vec3 getAnimationPoint(BlockPos pos) {
+        return Vec3.atBottomCenterOf(pos).add(0, 0.25D, 0);
     }
 }

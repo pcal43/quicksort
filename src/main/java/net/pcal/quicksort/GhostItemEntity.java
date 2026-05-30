@@ -1,36 +1,52 @@
 package net.pcal.quicksort;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * These are the 'ghost' entities that fly from the quicksorter to the target chests when sorting is happening.
- * They disable collision checking and other normal ItemEntity behaviors - they are intended to solely be visual
- * artifacts.
+ * They are display entities rather than ItemEntities so the client will not apply item physics or block collisions.
  */
-public class GhostItemEntity extends ItemEntity {
+public class GhostItemEntity extends Display.ItemDisplay {
 
-    public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack) {
-        super(world, d, e, f, stack);
+    private final Vec3 targetPos;
+
+    public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack, Vec3 targetPos) {
+        super(EntityType.ITEM_DISPLAY, world);
+        this.targetPos = targetPos;
+        setPos(d, e, f);
+        setItemStack(stack);
+        setItemTransform(ItemDisplayContext.GROUND);
+        setNoGravity(true);
+        setShadowRadius(0);
+        setShadowStrength(0);
+        setWidth(0.25f);
+        setHeight(0.25f);
     }
 
-    /**
-     * This prevents players from being able to pick up the ghost items.
-     */
     @Override
-    public void playerTouch(Player player) {}
+    public void tick() {
+        super.tick();
+        final Vec3 nextPos = position().add(getDeltaMovement());
+        setPos(reachesTarget(nextPos) ? this.targetPos : nextPos);
+    }
 
-    /**
-     * The prevents hoppers from pulling the ghost items.  Also seems to block some advancement-related code.
-     */
-    @Override
-    public boolean isAlive() { return false; }
+    public boolean hasReachedTarget() {
+        return reachesTarget(position());
+    }
+
+    private boolean reachesTarget(Vec3 pos) {
+        return pos.distanceToSqr(this.targetPos) < 1.0E-6D ||
+                this.targetPos.subtract(position()).dot(this.targetPos.subtract(pos)) <= 0;
+    }
 
     /**
      * Prevents ghosts from catching fire if they travel through lava (which evidently doesn't block line-of-sight).
@@ -96,4 +112,3 @@ public class GhostItemEntity extends ItemEntity {
         return false;
     }
 }
-
