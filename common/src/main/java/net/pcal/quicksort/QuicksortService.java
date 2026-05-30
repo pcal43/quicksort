@@ -409,13 +409,11 @@ public class QuicksortService {
                         continue; // skip other sorting chests
                     }
 
-                    final Vec3 origin = getAnimationPoint(originChest.getBlockPos());
-                    final Vec3 lineOfSightOrigin = getTransferPoint(originChest.getBlockPos(), targetPos);
-                    final Vec3 lineOfSightTarget = getTransferPoint(targetPos, originChest.getBlockPos());
-                    final Vec3 target = getAnimationPoint(targetPos);
 
                     final boolean lineOfSightClear;
                     if (chestConfig.requireLineOfSight()) {
+                        final Vec3 lineOfSightOrigin = getTransferPoint(originChest.getBlockPos(), targetPos);
+                        final Vec3 lineOfSightTarget = getTransferPoint(targetPos, originChest.getBlockPos());
                         BlockHitResult result = world.clip(new ClipContext(lineOfSightOrigin, lineOfSightTarget,
                                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
                         lineOfSightClear = result.getLocation().equals(lineOfSightTarget);
@@ -426,6 +424,8 @@ public class QuicksortService {
                         lineOfSightClear = true;
                     }
                     if (lineOfSightClear) {
+                        final Vec3 origin =  Vec3.atCenterOf(originChest.getBlockPos());
+                        final Vec3 target = Vec3.atCenterOf(targetPos);
                         Vec3 itemVelocity = new Vec3(
                                 (target.x() - origin.x()) / chestConfig.animationTicks(),
                                 (target.y() - origin.y()) / chestConfig.animationTicks(),

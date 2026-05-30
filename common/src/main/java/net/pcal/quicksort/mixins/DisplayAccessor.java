@@ -1,5 +1,6 @@
 package net.pcal.quicksort.mixins;
 
+import com.mojang.math.Transformation;
 import net.minecraft.world.entity.Display;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -21,4 +22,7 @@ public interface DisplayAccessor {
 
     @Invoker("setHeight")
     void quicksort$setHeight(float height);
+
+    @Invoker("setTransformation")
+    void quicksort$setTransformation(Transformation transformation);
 }
