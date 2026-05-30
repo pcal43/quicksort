@@ -9,7 +9,6 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 import java.util.Random;
 
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import org.apache.logging.log4j.Logger;
