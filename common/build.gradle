@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom'
+	id 'net.fabricmc.fabric-loom'
 }
 
 repositories {
@@ -11,9 +11,8 @@ repositories {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${minecraft_version}"
-	mappings loom.officialMojangMappings()
 
-	modCompileOnly "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+	compileOnly "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 	compileOnly "org.spongepowered:mixin:${spongepowered_version}"
 
 	testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"

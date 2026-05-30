@@ -10,6 +10,6 @@ public class QuicksortFabricInitializer implements ModInitializer {
     @Override
     public void onInitialize() {
         QuicksortMod.initialize();
-        ServerTickEvents.END_WORLD_TICK.register(QuicksortService.getInstance()::onEndTick);
+        ServerTickEvents.END_LEVEL_TICK.register(QuicksortService.getInstance()::onEndTick);
     }
 }
