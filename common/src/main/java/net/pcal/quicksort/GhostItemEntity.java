@@ -4,11 +4,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.pcal.quicksort.mixins.DisplayAccessor;
+import net.pcal.quicksort.mixins.ItemDisplayAccessor;
 
 /**
  * These are the 'ghost' entities that fly from the quicksorter to the target chests when sorting is happening.
@@ -23,7 +26,16 @@ public class GhostItemEntity extends Display.ItemDisplay {
         this.targetPos = targetPos;
         setPos(d, e, f);
         getSlot(0).set(stack);
+        ((ItemDisplayAccessor)this).quicksort$setItemTransform(ItemDisplayContext.GROUND);
         setNoGravity(true);
+        ((DisplayAccessor)this).quicksort$setShadowRadius(0);
+        ((DisplayAccessor)this).quicksort$setShadowStrength(0);
+        ((DisplayAccessor)this).quicksort$setWidth(0.25f);
+        ((DisplayAccessor)this).quicksort$setHeight(0.25f);
+    }
+
+    public void setPositionInterpolationDuration(int ticks) {
+        ((DisplayAccessor)this).quicksort$setPosRotInterpolationDuration(ticks);
     }
 
     @Override

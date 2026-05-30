@@ -4,6 +4,8 @@
   "package": "net.pcal.quicksort.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "DisplayAccessor",
+    "ItemDisplayAccessor",
     "QuicksortChestMixin"
   ],
   "injectors": {

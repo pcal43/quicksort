@@ -217,6 +217,7 @@ public class QuicksortService {
                     targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(),
                     ghostStack, targetChest.targetItemPos);
             this.ghostItems.add(itemEntity);
+            itemEntity.setPositionInterpolationDuration(1);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);
