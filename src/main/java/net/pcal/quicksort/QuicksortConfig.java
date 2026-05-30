@@ -1,10 +1,10 @@
 package net.pcal.quicksort;
 
+import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.Level;
 
 import java.util.List;
 import java.util.Set;
-import net.minecraft.resources.Identifier;
 
 public record QuicksortConfig(
         List<QuicksortChestConfig> chestConfigs,

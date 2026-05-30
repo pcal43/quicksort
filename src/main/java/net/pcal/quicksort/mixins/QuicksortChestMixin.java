@@ -1,7 +1,6 @@
 package net.pcal.quicksort.mixins;
 
 import net.minecraft.world.entity.ContainerUser;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.pcal.quicksort.QuicksortService;
 import org.spongepowered.asm.mixin.Mixin;
