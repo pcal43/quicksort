@@ -1,6 +1,5 @@
 package net.pcal.quicksort;
 
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -43,7 +42,7 @@ import static net.minecraft.world.level.block.ChestBlock.getContainer;
 /**
  * Singleton that makes the quicksorter chests do their thing.
  */
-public class QuicksortService implements ServerTickEvents.EndWorldTick {
+public class QuicksortService {
 
     // ===================================================================================
     // Singleton
@@ -109,9 +108,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     // ===================================================================================
-    // EndWorldTick implementation
-
-    @Override
     public void onEndTick(ServerLevel world) {
         if (this.jobs.isEmpty()) return;
         Iterator<QuicksorterJob> i = this.jobs.iterator();
@@ -221,7 +217,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(),
                     ghostStack, targetChest.targetItemPos);
             this.ghostItems.add(itemEntity);
-            itemEntity.setPosRotInterpolationDuration(1);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);

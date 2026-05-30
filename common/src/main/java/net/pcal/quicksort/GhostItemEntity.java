@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -23,13 +22,8 @@ public class GhostItemEntity extends Display.ItemDisplay {
         super(EntityType.ITEM_DISPLAY, world);
         this.targetPos = targetPos;
         setPos(d, e, f);
-        setItemStack(stack);
-        setItemTransform(ItemDisplayContext.GROUND);
+        getSlot(0).set(stack);
         setNoGravity(true);
-        setShadowRadius(0);
-        setShadowStrength(0);
-        setWidth(0.25f);
-        setHeight(0.25f);
     }
 
     @Override
