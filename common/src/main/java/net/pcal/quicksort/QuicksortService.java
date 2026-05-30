@@ -1,6 +1,5 @@
 package net.pcal.quicksort;
 
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -43,7 +42,7 @@ import static net.minecraft.world.level.block.ChestBlock.getContainer;
 /**
  * Singleton that makes the quicksorter chests do their thing.
  */
-public class QuicksortService implements ServerTickEvents.EndWorldTick {
+public class QuicksortService {
 
     // ===================================================================================
     // Singleton
@@ -109,9 +108,6 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
     }
 
     // ===================================================================================
-    // EndWorldTick implementation
-
-    @Override
     public void onEndTick(ServerLevel world) {
         if (this.jobs.isEmpty()) return;
         Iterator<QuicksorterJob> i = this.jobs.iterator();
@@ -221,7 +217,7 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                     targetChest.originItemPos.x(), targetChest.originItemPos.y(), targetChest.originItemPos.z(),
                     ghostStack, targetChest.targetItemPos);
             this.ghostItems.add(itemEntity);
-            itemEntity.setPosRotInterpolationDuration(1);
+            itemEntity.setPositionInterpolationDuration(1);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
             itemEntity.setInvulnerable(true);
@@ -413,13 +409,11 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                         continue; // skip other sorting chests
                     }
 
-                    final Vec3 origin = getAnimationPoint(originChest.getBlockPos());
-                    final Vec3 lineOfSightOrigin = getTransferPoint(originChest.getBlockPos(), targetPos);
-                    final Vec3 lineOfSightTarget = getTransferPoint(targetPos, originChest.getBlockPos());
-                    final Vec3 target = getAnimationPoint(targetPos);
 
                     final boolean lineOfSightClear;
                     if (chestConfig.requireLineOfSight()) {
+                        final Vec3 lineOfSightOrigin = getTransferPoint(originChest.getBlockPos(), targetPos);
+                        final Vec3 lineOfSightTarget = getTransferPoint(targetPos, originChest.getBlockPos());
                         BlockHitResult result = world.clip(new ClipContext(lineOfSightOrigin, lineOfSightTarget,
                                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, itemEntity));
                         lineOfSightClear = result.getLocation().equals(lineOfSightTarget);
@@ -430,6 +424,8 @@ public class QuicksortService implements ServerTickEvents.EndWorldTick {
                         lineOfSightClear = true;
                     }
                     if (lineOfSightClear) {
+                        final Vec3 origin =  Vec3.atCenterOf(originChest.getBlockPos());
+                        final Vec3 target = Vec3.atCenterOf(targetPos);
                         Vec3 itemVelocity = new Vec3(
                                 (target.x() - origin.x()) / chestConfig.animationTicks(),
                                 (target.y() - origin.y()) / chestConfig.animationTicks(),

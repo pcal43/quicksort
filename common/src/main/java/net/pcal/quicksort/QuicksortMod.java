@@ -1,7 +1,5 @@
 package net.pcal.quicksort;
 
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +15,7 @@ import java.nio.file.StandardCopyOption;
 import static net.pcal.quicksort.QuicksortService.LOGGER_NAME;
 import static net.pcal.quicksort.QuicksortService.LOG_PREFIX;
 
-public class QuicksortInitializer implements ModInitializer {
+public class QuicksortMod {
 
     // ===================================================================================
     // Constants
@@ -26,12 +24,9 @@ public class QuicksortInitializer implements ModInitializer {
     private static final String CONFIG_FILENAME = "quicksort.json5";
 
     // ===================================================================================
-    // ModInitializer implementation
-
-    @Override
-    public void onInitialize() {
+    public static void initialize() {
         try {
-            initialize();
+            initializeCommon();
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
@@ -40,7 +35,7 @@ public class QuicksortInitializer implements ModInitializer {
     // ===================================================================================
     // Private
 
-    private void initialize() throws IOException {
+    private static void initializeCommon() throws IOException {
         Logger logger = LogManager.getLogger(LOGGER_NAME);
 
         final Path configDirPath = Paths.get("config");
@@ -53,7 +48,7 @@ public class QuicksortInitializer implements ModInitializer {
         // If they don't have a config file, create a default one that they can edit later
         if (!configFilePath.toFile().exists()) {
             logger.info(LOG_PREFIX + "Writing default configuration to " + configFilePath);
-            try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
+            try (final InputStream in = QuicksortMod.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
                 if (in == null) throw new IllegalStateException("Unable to load " + DEFAULT_CONFIG_RESOURCE_NAME);
                 java.nio.file.Files.createDirectories(configDirPath); // dir doesn't exist on fresh install
                 java.nio.file.Files.copy(in, configFilePath, StandardCopyOption.REPLACE_EXISTING);
@@ -62,7 +57,7 @@ public class QuicksortInitializer implements ModInitializer {
         // Load the default config from our resource path.  We'll use the values here as defaults for loading their config.
         // This will allow us to more easily add new configuration values without breaking existing configs.
         final QuicksortConfig defaultConfig;
-        try (final InputStream in = QuicksortInitializer.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
+        try (final InputStream in = QuicksortMod.class.getClassLoader().getResourceAsStream(DEFAULT_CONFIG_RESOURCE_NAME)) {
             defaultConfig = QuicksortConfigParser.parse(in, null);
         }
         logger.info(LOG_PREFIX + "Loading configuration from " + configFilePath);
@@ -75,7 +70,6 @@ public class QuicksortInitializer implements ModInitializer {
             logger.info(LOG_PREFIX + "LogLevel set to " + config.logLevel());
         }
         QuicksortService.getInstance().init(config, logger);
-        ServerTickEvents.END_WORLD_TICK.register(QuicksortService.getInstance());
         logger.info(LOG_PREFIX + "Initialized");
     }
 }

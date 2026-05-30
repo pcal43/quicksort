@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "quicksort",
-  "version": "${version}",
+  "version": "${mod_version}",
   "name": "Quicksort",
   "description": "Low-effort Organization",
   "authors": ["pcal.net"],
@@ -15,17 +15,17 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.pcal.quicksort.QuicksortInitializer"
+      "net.pcal.quicksort.fabric.QuicksortFabricInitializer"
     ]
   },
   "mixins": [
     "quicksort.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.15.11",
-    "fabric": "*",
-    "minecraft": ">=1.21",
-    "java": ">=21"
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": "*",
+    "minecraft": ">=${minecraft_version}",
+    "java": ">=${java_version}"
   },
   "conflicts": {}
 }

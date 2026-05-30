@@ -1,0 +1,23 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+[[mixins]]
+config = "quicksort.mixins.json"
+[[mods]]
+modId = "quicksort"
+version = "${mod_version}"
+displayName = "Quicksort"
+description = "Low-effort Organization"
+logoFile = "quicksort-icon.png"
+[[dependencies.quicksort]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.quicksort]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${minecraft_version},)"
+ordering = "NONE"
+side = "BOTH"

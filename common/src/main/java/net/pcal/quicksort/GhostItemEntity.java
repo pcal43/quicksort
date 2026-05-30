@@ -1,5 +1,6 @@
 package net.pcal.quicksort;
 
+import com.mojang.math.Transformation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
@@ -10,6 +11,10 @@ import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.pcal.quicksort.mixins.DisplayAccessor;
+import net.pcal.quicksort.mixins.ItemDisplayAccessor;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * These are the 'ghost' entities that fly from the quicksorter to the target chests when sorting is happening.
@@ -17,30 +22,53 @@ import net.minecraft.world.phys.Vec3;
  */
 public class GhostItemEntity extends Display.ItemDisplay {
 
+    private static final int TARGET_LINGER_TICKS = 2;
+    private static final Transformation CENTERED_ITEM_TRANSFORM = new Transformation(
+            new Vector3f(0, -0.25f, 0),
+            new Quaternionf(),
+            new Vector3f(1, 1, 1),
+            new Quaternionf());
+
     private final Vec3 targetPos;
+    private int ticksAtTarget = -1;
 
     public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack, Vec3 targetPos) {
         super(EntityType.ITEM_DISPLAY, world);
         this.targetPos = targetPos;
         setPos(d, e, f);
-        setItemStack(stack);
-        setItemTransform(ItemDisplayContext.GROUND);
+        getSlot(0).set(stack);
+        ((ItemDisplayAccessor)this).quicksort$setItemTransform(ItemDisplayContext.GROUND);
         setNoGravity(true);
-        setShadowRadius(0);
-        setShadowStrength(0);
-        setWidth(0.25f);
-        setHeight(0.25f);
+        ((DisplayAccessor)this).quicksort$setShadowRadius(0);
+        ((DisplayAccessor)this).quicksort$setShadowStrength(0);
+        ((DisplayAccessor)this).quicksort$setWidth(0.25f);
+        ((DisplayAccessor)this).quicksort$setHeight(0.25f);
+        ((DisplayAccessor)this).quicksort$setTransformation(CENTERED_ITEM_TRANSFORM);
+    }
+
+    public void setPositionInterpolationDuration(int ticks) {
+        ((DisplayAccessor)this).quicksort$setPosRotInterpolationDuration(ticks);
     }
 
     @Override
     public void tick() {
         super.tick();
+        if (this.ticksAtTarget >= 0) {
+            this.ticksAtTarget++;
+            setPos(this.targetPos);
+            return;
+        }
         final Vec3 nextPos = position().add(getDeltaMovement());
-        setPos(reachesTarget(nextPos) ? this.targetPos : nextPos);
+        if (reachesTarget(nextPos)) {
+            setPos(this.targetPos);
+            this.ticksAtTarget = 0;
+        } else {
+            setPos(nextPos);
+        }
     }
 
     public boolean hasReachedTarget() {
-        return reachesTarget(position());
+        return this.ticksAtTarget >= TARGET_LINGER_TICKS;
     }
 
     private boolean reachesTarget(Vec3 pos) {
