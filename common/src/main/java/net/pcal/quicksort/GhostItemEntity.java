@@ -4,7 +4,7 @@ import com.mojang.math.Transformation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
@@ -33,7 +33,7 @@ public class GhostItemEntity extends Display.ItemDisplay {
     private int ticksAtTarget = -1;
 
     public GhostItemEntity(Level world, double d, double e, double f, ItemStack stack, Vec3 targetPos) {
-        super(EntityType.ITEM_DISPLAY, world);
+        super(EntityTypes.ITEM_DISPLAY, world);
         this.targetPos = targetPos;
         setPos(d, e, f);
         getSlot(0).set(stack);
