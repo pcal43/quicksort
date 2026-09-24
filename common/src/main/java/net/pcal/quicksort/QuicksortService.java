@@ -220,7 +220,7 @@ public class QuicksortService {
             itemEntity.setPositionInterpolationDuration(1);
             itemEntity.setNoGravity(true);
             itemEntity.setOnGround(false);
-            itemEntity.setInvulnerable(true);
+            itemEntity.setPermanentlyInvulnerable(true);
             itemEntity.setDeltaMovement(targetChest.itemVelocity);
             world.addFreshEntity(itemEntity);
         }
